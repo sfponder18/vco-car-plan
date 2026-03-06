@@ -321,7 +321,7 @@ body::before {
     <div class="card">
       <div class="card-header"><h2>Car Sign-Out</h2></div>
       <div class="card-body">
-        <div class="signout-form vco-only" style="display:none;">
+        <div class="signout-form">
           <div class="control-group"><label>Time Out</label><input type="text" id="so-time" placeholder="0730"></div>
           <div class="control-group"><label>Car</label><select id="so-car"></select></div>
           <div class="control-group"><label>Driver</label><input type="text" id="so-driver" placeholder="Name"></div>
@@ -503,7 +503,8 @@ function loadAllData() {
 // ============================================================
 function renderAll() {
   updateCarStatuses();
-  if (isVCO) { renderSectionFilters(); renderRoster(); populateCarSelect(); updateHotelSummary(); if (currentAssignments.length) renderEditor(); }
+  populateCarSelect();
+  if (isVCO) { renderSectionFilters(); renderRoster(); updateHotelSummary(); if (currentAssignments.length) renderEditor(); }
   renderAssignments();
   renderSignoutLog();
 }
