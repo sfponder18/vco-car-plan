@@ -333,13 +333,19 @@ body::before {
     <div class="card">
       <div class="card-header"><h2>Car Sign-Out</h2></div>
       <div class="card-body">
-        <div class="signout-form">
-          <div class="control-group"><label>Time Out</label><input type="text" id="so-time" placeholder="0730"></div>
-          <div class="control-group"><label>Car</label><select id="so-car"></select></div>
-          <div class="control-group"><label>Driver</label><input type="text" id="so-driver" placeholder="Name"></div>
+        <div class="signout-form" style="grid-template-columns:120px 120px 1fr 120px;">
+          <div class="control-group"><label>Time Out</label><input type="text" id="so-time" placeholder="0730" oninput="filterSignoutCars()"></div>
+          <div class="control-group"><label>ETA Back</label><input type="text" id="so-eta" placeholder="0900" oninput="filterSignoutCars()"></div>
           <div class="control-group"><label>Destination</label><input type="text" id="so-dest" placeholder="Where to"></div>
-          <div class="control-group"><label>ETA Back</label><input type="text" id="so-eta" placeholder="0900"></div>
-          <div class="control-group"><label>&nbsp;</label><button class="btn btn-primary btn-sm" onclick="addSignout()">Log</button></div>
+          <div class="control-group"><label>Driver</label><input type="text" id="so-driver" placeholder="Name"></div>
+        </div>
+        <div id="so-car-section" style="display:none;margin-bottom:16px;">
+          <label style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;display:block;">Available Cars</label>
+          <div id="so-car-grid" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <button class="btn btn-primary btn-sm" onclick="addSignout()">Log Sign-Out</button>
+          <span id="so-selected" style="font-size:12px;color:var(--gold);margin-left:12px;"></span>
         </div>
         <table class="assign-table">
           <thead><tr><th>Time Out</th><th>Car</th><th>Driver</th><th>Destination</th><th>ETA Back</th><th>Time In</th><th>Action</th></tr></thead>
@@ -916,23 +922,54 @@ function setEtaReturn(idx, val) {
 // ============================================================
 // SIGN-OUT
 // ============================================================
+var selectedSignoutCar = '';
+
 function populateCarSelect() {
-  var sel = document.getElementById('so-car');
-  if (!sel) return;
-  sel.innerHTML = '<option value="">Select car</option>' + CARS.filter(function(c){return !c.permanent;}).map(function(c) {
-    return '<option value="'+c.name+'">'+c.name+' ('+c.plate+')</option>';
-  }).join('');
+  // No-op, replaced by filterSignoutCars
+}
+
+function filterSignoutCars() {
+  var timeOut = document.getElementById('so-time').value.trim();
+  var eta = document.getElementById('so-eta').value.trim();
+  var section = document.getElementById('so-car-section');
+  var grid = document.getElementById('so-car-grid');
+  if (!timeOut || !eta) { section.style.display = 'none'; selectedSignoutCar = ''; return; }
+  section.style.display = 'block';
+
+  var outMins = parseInt(timeOut.substring(0,2))*60 + parseInt(timeOut.substring(2,4));
+  var etaMins = parseInt(eta.substring(0,2))*60 + parseInt(eta.substring(2,4));
+
+  var available = CARS.filter(function(c) {
+    if (c.permanent) return false;
+    // Check if already signed out and not returned
+    var out = signoutLog.find(function(s){return s.car===c.name && !s.timeIn;});
+    if (out) return false;
+    // Check morning push conflict
+    var inPush = currentAssignments.find(function(a){return a.car===c.name;});
+    if (inPush) {
+      var depMins = parseInt(inPush.departTime.substring(0,2))*60 + parseInt(inPush.departTime.substring(2,4));
+      // Conflict if sign-out window overlaps with departure (must be back 15 min before push)
+      if (etaMins > depMins - 15) return false;
+    }
+    return true;
+  });
+
+  grid.innerHTML = available.length ? available.map(function(c) {
+    var sel = selectedSignoutCar === c.name ? 'background:var(--gold);color:#000;' : 'background:var(--bg-card);color:var(--text-primary);';
+    var ev = c.electric ? ' <span style="color:var(--green);font-size:10px;">EV</span>' : '';
+    return '<div onclick="selectSignoutCar(\''+c.name+'\')" style="'+sel+'border:1px solid var(--border);border-radius:6px;padding:8px 14px;cursor:pointer;font-family:JetBrains Mono,monospace;font-size:13px;font-weight:600;"><strong>'+c.name+'</strong>'+ev+'<br><span style="font-size:10px;color:var(--text-dim);">'+c.plate+'</span></div>';
+  }).join('') : '<span style="color:var(--red);font-size:13px;">No cars available for this time window</span>';
+}
+
+function selectSignoutCar(name) {
+  selectedSignoutCar = (selectedSignoutCar === name) ? '' : name;
+  document.getElementById('so-selected').textContent = selectedSignoutCar ? selectedSignoutCar + ' selected' : '';
+  filterSignoutCars();
 }
 
 function addSignout() {
-  var time=document.getElementById('so-time').value, car=document.getElementById('so-car').value, driver=document.getElementById('so-driver').value, dest=document.getElementById('so-dest').value, eta=document.getElementById('so-eta').value;
-  if (!time||!car||!driver) return;
-  // Block sign-out if car is assigned in the morning push
-  var inPush = currentAssignments.find(function(a){return a.car===car;});
-  if (inPush) {
-    alert(car + ' is assigned in the morning push (depart ' + inPush.departTime + 'L). Return it before the push or remove it from assignments first.');
-    return;
-  }
+  var time=document.getElementById('so-time').value, car=selectedSignoutCar, driver=document.getElementById('so-driver').value, dest=document.getElementById('so-dest').value, eta=document.getElementById('so-eta').value;
+  if (!time||!car||!driver||!eta) { alert('Fill in all fields and select a car.'); return; }
   signoutLog.push({time:time,car:car,driver:driver,dest:dest,eta:eta,timeIn:''});
   renderSignoutLog();
   renderCarsOut();
@@ -941,6 +978,9 @@ function addSignout() {
   renderFleetGrid('fleet-grid'); renderFleetGrid('all-cars-grid');
   postToSheet({ action:'addSignout', time:time, car:car, driver:driver, passengers:'', destination:dest, eta:eta });
   ['so-time','so-driver','so-dest','so-eta'].forEach(function(id){document.getElementById(id).value='';});
+  selectedSignoutCar = '';
+  document.getElementById('so-selected').textContent = '';
+  document.getElementById('so-car-section').style.display = 'none';
 }
 
 function returnCar(idx) {
@@ -950,6 +990,18 @@ function returnCar(idx) {
   if(cs){cs.status='available';cs.driver='';cs.dest='';cs.eta='';}
   renderSignoutLog(); renderCarsOut(); renderFleetGrid('fleet-grid'); renderFleetGrid('all-cars-grid');
   postToSheet({ action:'returnCar', time:e.time, car:e.car, timeIn:e.timeIn });
+}
+
+function deleteSignout(idx) {
+  var e = signoutLog[idx];
+  if (!confirm('Delete sign-out entry for ' + e.car + ' at ' + e.time + 'L?')) return;
+  // If car was out, mark available
+  if (!e.timeIn) {
+    var cs = CARS.find(function(c){return c.name===e.car;});
+    if (cs) { cs.status='available'; cs.driver=''; cs.dest=''; cs.eta=''; }
+  }
+  signoutLog.splice(idx, 1);
+  renderSignoutLog(); renderCarsOut(); renderFleetGrid('fleet-grid'); renderFleetGrid('all-cars-grid');
 }
 
 function renderCarsOut() {
@@ -987,7 +1039,14 @@ function renderSignoutLog() {
   var body=document.getElementById('signout-body');
   if(!signoutLog.length){body.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:20px;">No sign-outs logged</td></tr>';return;}
   body.innerHTML=signoutLog.map(function(s,i){
-    return '<tr><td style="font-family:JetBrains Mono,monospace;color:var(--gold);font-weight:600;">'+s.time+'L</td><td><strong>'+s.car+'</strong></td><td>'+s.driver+'</td><td>'+s.dest+'</td><td style="font-family:JetBrains Mono,monospace;">'+(s.eta?s.eta+'L':'--')+'</td><td style="font-family:JetBrains Mono,monospace;">'+(s.timeIn?s.timeIn+'L':'--')+'</td><td>'+(s.timeIn?'<span style="color:var(--green);">Returned</span>':'<button class="btn btn-sm btn-green" onclick="returnCar('+i+')">Return</button>')+'</td></tr>';
+    var actions = '';
+    if (s.timeIn) {
+      actions = '<span style="color:var(--green);">Returned</span> ';
+    } else {
+      actions = '<button class="btn btn-sm btn-green" onclick="returnCar('+i+')">Return</button> ';
+    }
+    actions += '<button class="btn btn-sm btn-red" onclick="deleteSignout('+i+')" style="font-size:10px;padding:2px 6px;">X</button>';
+    return '<tr><td style="font-family:JetBrains Mono,monospace;color:var(--gold);font-weight:600;">'+s.time+'L</td><td><strong>'+s.car+'</strong></td><td>'+s.driver+'</td><td>'+s.dest+'</td><td style="font-family:JetBrains Mono,monospace;">'+(s.eta?s.eta+'L':'--')+'</td><td style="font-family:JetBrains Mono,monospace;">'+(s.timeIn?s.timeIn+'L':'--')+'</td><td>'+actions+'</td></tr>';
   }).join('');
 }
 
