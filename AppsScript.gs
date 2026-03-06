@@ -150,7 +150,7 @@ function addSignout(ss, data) {
     if (row > 50) break;
   }
 
-  sheet.getRange(row, 1).setValue(data.time);
+  sheet.getRange(row, 1).setNumberFormat('@').setValue(data.time);
   sheet.getRange(row, 2).setValue(data.car);
   sheet.getRange(row, 3).setValue(data.driver);
   sheet.getRange(row, 4).setValue(data.passengers || '');
@@ -180,9 +180,10 @@ function returnCarLog(ss, data) {
   // Find the sign-out entry by time and car name
   var logStart = 21;
   for (var row = logStart; row <= 50; row++) {
-    var time = sheet.getRange(row, 1).getValue();
-    var car = sheet.getRange(row, 2).getValue();
-    if (time.toString() === data.time && car === data.car && sheet.getRange(row, 7).getValue() === '') {
+    var time = sheet.getRange(row, 1).getValue().toString().trim();
+    var car = sheet.getRange(row, 2).getValue().toString().trim();
+    var dataTime = data.time.toString().trim();
+    if ((time === dataTime || time === String(parseInt(dataTime))) && car === data.car && sheet.getRange(row, 7).getValue() === '') {
       sheet.getRange(row, 7).setValue(data.timeIn);
       break;
     }
@@ -228,9 +229,11 @@ function deleteSignout(ss, data) {
 
   var logStart = 21;
   for (var row = logStart; row <= 50; row++) {
-    var time = sheet.getRange(row, 1).getValue();
-    var car = sheet.getRange(row, 2).getValue();
-    if (time.toString() === data.time && car === data.car) {
+    var time = sheet.getRange(row, 1).getValue().toString().trim();
+    var car = sheet.getRange(row, 2).getValue().toString().trim();
+    var dataTime = data.time.toString().trim();
+    // Handle Sheets converting "0730" to number 730
+    if ((time === dataTime || time === String(parseInt(dataTime))) && car === data.car) {
       // Clear the row
       sheet.getRange(row, 1, 1, 7).clearContent();
       // Update car status to available if it was committed
