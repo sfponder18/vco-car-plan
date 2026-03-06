@@ -556,7 +556,7 @@ function loadAllData() {
 function renderAll() {
   updateCarStatuses();
   populateCarSelect();
-  if (isVCO) { renderSectionFilters(); renderRoster(); updateHotelSummary(); if (currentAssignments.length) renderEditor(); }
+  if (isVCO) { renderSectionFilters(); renderRoster(); updateHotelSummary(); renderEditor(); }
   renderAssignments();
   renderCarsOut();
   renderSignoutLog();
@@ -885,6 +885,16 @@ function renderEditor() {
     '</div>';
   }).join('');
 
+  // Empty cars (not yet in assignments)
+  CARS.forEach(function(car) {
+    var inAssign = currentAssignments.find(function(a){return a.car===car.name;});
+    if (inAssign) return;
+    html += '<div class="assign-car-box" style="border-color:var(--border);opacity:0.6;" onclick="addToCar(\''+esc(car.name)+'\')">'+
+      '<div class="car-header"><span class="car-name">'+car.name+'</span><span class="car-count">0/5</span>'+(car.permanent?' <span style="font-size:10px;color:var(--amber);">PERM</span>':'')+'</div>'+
+      '<div><span style="color:var(--text-dim);font-size:12px;">Empty — tap person then this car</span></div>'+
+    '</div>';
+  });
+
   // Unassigned pool
   var unHtml = unassigned.map(function(p) {
     var cls = 'person-chip ' + (p.section==='Pilots' ? 'pilot' : 'support');
@@ -897,6 +907,44 @@ function renderEditor() {
   '</div>';
 
   editor.innerHTML = html;
+}
+
+function addToCar(carName) {
+  if (!selectedPerson) return;
+  var name = selectedPerson;
+  var car = CARS.find(function(c){return c.name===carName;});
+  if (!car) return;
+
+  // Remove from current assignment if in one
+  for (var i = 0; i < currentAssignments.length; i++) {
+    var a = currentAssignments[i];
+    if (a.driver === name) {
+      if (a.passengers.length > 0) {
+        a.driver = a.passengers.shift();
+        a.driverFueler = !!(PERSONNEL.find(function(p){return p.name===a.driver;}) || {}).fueler;
+      } else {
+        currentAssignments.splice(i, 1);
+      }
+      break;
+    } else {
+      var pIdx = a.passengers.indexOf(name);
+      if (pIdx >= 0) { a.passengers.splice(pIdx, 1); break; }
+    }
+  }
+
+  // Create new assignment for this car
+  var p = PERSONNEL.find(function(p){return p.name===name;});
+  currentAssignments.push({
+    car: car.name, plate: car.plate, electric: car.electric,
+    driver: name, driverFueler: p ? p.fueler : false,
+    passengers: [], hotel: p ? p.hotel : '', destination: '', departTime: '0500'
+  });
+
+  selectedPerson = null;
+  renderEditor();
+  renderAssignments();
+  updateCarStatuses();
+  pushAssignmentsToSheet();
 }
 
 function esc(s) { return s.replace(/'/g, "\\'"); }
