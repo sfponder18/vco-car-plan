@@ -454,20 +454,8 @@ function loadAllData() {
       CARS.push({ num: parseInt(r[0].replace('Car ','')), name: r[1]||'', plate: plate, electric: isElectric, capacity: parseInt(r[4])||5, permanent: !!(r[5]), assignedTo: r[5]||'', status: (r[6]||'').toLowerCase().includes('permanent') ? 'permanent' : 'available', driver:'', dest:'', eta:'' });
     }
 
-    if (availRows.length > 1) {
-      for (var i = 1; i < availRows.length; i++) {
-        var r = availRows[i];
-        if (!r || !r[1]) continue;
-        var car = CARS.find(function(c) { return c.name === r[1]; });
-        if (car && !car.permanent) {
-          var st = (r[2]||'').toLowerCase();
-          if (st.includes('commit') || st.includes('out')) car.status = 'committed';
-          else if (st.includes('return')) car.status = 'returning';
-          else car.status = 'available';
-          car.driver = r[3]||''; car.dest = r[4]||''; car.eta = r[5]||'';
-        }
-      }
-    }
+    // Availability tab status is only used for sign-out log driven statuses
+    // Morning push statuses are derived from currentAssignments after B3 load below
 
     var hadLocalEdits = rosterEditedLocally;
     PERSONNEL = [];
@@ -514,9 +502,8 @@ function loadAllData() {
 // RENDER
 // ============================================================
 function renderAll() {
-  renderFleetGrid('fleet-grid');
-  renderFleetGrid('all-cars-grid');
-  if (isVCO) { renderSectionFilters(); renderRoster(); populateCarSelect(); updateHotelSummary(); }
+  updateCarStatuses();
+  if (isVCO) { renderSectionFilters(); renderRoster(); populateCarSelect(); updateHotelSummary(); if (currentAssignments.length) renderEditor(); }
   renderAssignments();
   renderSignoutLog();
 }
@@ -643,12 +630,48 @@ function updateHotelSummary() {
 function autoAssign() {
   if (!dataLoaded || !CARS.length || !PERSONNEL.length) { document.getElementById('assign-status').textContent='No data.'; return; }
   var destination = document.getElementById('vco-destination').value || 'Ops';
+
+  // Permanent car drivers
+  var PERM_DRIVERS = {
+    'Odin': 'Merritt, Dustin M.',
+    'Mjolnir': ['Farrington, Tony', 'Williams, Sean']
+  };
+
+  // Build present people list, excluding permanent car drivers (they go in their cars)
+  var permDriverNames = ['Merritt, Dustin M.', 'Farrington, Tony', 'Williams, Sean'];
   var hotelGroups = {};
-  presentPersonnel.forEach(function(i) { var p=PERSONNEL[i]; if(!hotelGroups[p.hotel]) hotelGroups[p.hotel]=[]; hotelGroups[p.hotel].push(p); });
+  presentPersonnel.forEach(function(i) {
+    var p = PERSONNEL[i];
+    if (permDriverNames.indexOf(p.name) >= 0) return; // handled separately
+    if (!hotelGroups[p.hotel]) hotelGroups[p.hotel] = [];
+    hotelGroups[p.hotel].push(p);
+  });
 
   var availCars = CARS.filter(function(c){return !c.permanent;});
   var carIdx = 0;
   currentAssignments = [];
+
+  // Assign permanent cars first if their drivers are present
+  CARS.filter(function(c){return c.permanent;}).forEach(function(car) {
+    var driverName = '';
+    if (car.name === 'Odin') {
+      var merritt = PERSONNEL.findIndex(function(p){return p.name==='Merritt, Dustin M.';});
+      if (merritt >= 0 && presentPersonnel.has(merritt)) driverName = 'Merritt, Dustin M.';
+    } else if (car.name === 'Mjolnir') {
+      var tony = PERSONNEL.findIndex(function(p){return p.name==='Farrington, Tony';});
+      var sean = PERSONNEL.findIndex(function(p){return p.name==='Williams, Sean';});
+      if (tony >= 0 && presentPersonnel.has(tony)) driverName = 'Farrington, Tony';
+      else if (sean >= 0 && presentPersonnel.has(sean)) driverName = 'Williams, Sean';
+    }
+    if (driverName) {
+      var dp = PERSONNEL.find(function(p){return p.name===driverName;});
+      currentAssignments.push({
+        car: car.name, plate: car.plate, electric: car.electric,
+        driver: driverName, driverFueler: dp ? dp.fueler : false,
+        passengers: [], hotel: dp ? dp.hotel : '', destination: destination, departTime: '0500'
+      });
+    }
+  });
 
   ['Flexbase','Kysthotell','Fosen Fjord'].forEach(function(hotel) {
     var people = hotelGroups[hotel] || [];
@@ -709,11 +732,12 @@ function autoAssign() {
 
 function updateCarStatuses() {
   CARS.forEach(function(c) {
-    if (!c.permanent) {
-      var a = currentAssignments.find(function(a){return a.car===c.name;});
-      if (a) { c.status='committed'; c.driver=a.driver; c.dest=a.destination; }
-      else { c.status='available'; c.driver=''; c.dest=''; }
-    }
+    var a = currentAssignments.find(function(a){return a.car===c.name;});
+    if (a) { c.status='committed'; c.driver=a.driver; c.dest=a.destination; }
+    else if (!c.permanent) { c.status='available'; c.driver=''; c.dest=''; }
+    // Sign-out log can also mark cars committed
+    var so = signoutLog.find(function(s){return s.car===c.name && !s.timeIn;});
+    if (so) { c.status='committed'; c.driver=so.driver; c.dest=so.dest; }
   });
   renderFleetGrid('fleet-grid');
   renderFleetGrid('all-cars-grid');
