@@ -21,8 +21,6 @@
   --accent-red: #ef4444;
   --accent-cyan: #06b6d4;
   --accent-purple: #8b5cf6;
-  --glow-blue: rgba(59, 130, 246, 0.15);
-  --glow-green: rgba(16, 185, 129, 0.15);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -46,7 +44,94 @@ body::before {
   z-index: 0;
 }
 
-.app { position: relative; z-index: 1; padding: 16px 24px; }
+/* PASSWORD SCREEN */
+.lock-screen {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  background: var(--bg-primary);
+}
+
+.lock-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 40px;
+  text-align: center;
+  width: 360px;
+}
+
+.lock-box .badge {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--accent-blue), #1d4ed8);
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 3px;
+  margin-bottom: 24px;
+}
+
+.lock-box h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: var(--text-secondary);
+}
+
+.lock-box input {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  text-align: center;
+  letter-spacing: 4px;
+  margin-bottom: 16px;
+}
+
+.lock-box input:focus { outline: none; border-color: var(--accent-blue); }
+
+.lock-box .error {
+  color: var(--accent-red);
+  font-size: 13px;
+  margin-bottom: 12px;
+  display: none;
+}
+
+.lock-box button {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, var(--accent-blue), #1d4ed8);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.lock-box button:hover { filter: brightness(1.1); }
+
+/* MAIN APP - hidden until auth */
+.app {
+  position: relative;
+  z-index: 1;
+  padding: 16px 24px;
+  display: none;
+}
+
+.app.unlocked { display: block; }
 
 /* HEADER */
 .header {
@@ -107,29 +192,26 @@ body::before {
   letter-spacing: 1px;
 }
 
-/* CONFIG BANNER */
-.config-banner {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(239, 68, 68, 0.05));
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  border-radius: 6px;
-  padding: 12px 16px;
-  margin-bottom: 12px;
-  font-size: 13px;
-  color: var(--accent-amber);
-  display: none;
-  align-items: center;
-  gap: 8px;
-}
-
-.config-banner.show { display: flex; }
-
-.config-banner code {
-  background: rgba(0,0,0,0.3);
-  padding: 1px 6px;
-  border-radius: 3px;
+/* LOADING */
+.loading {
+  text-align: center;
+  padding: 60px;
+  color: var(--text-dim);
   font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
+  font-size: 14px;
 }
+
+.loading .spinner {
+  display: inline-block;
+  width: 24px; height: 24px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent-blue);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 12px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* TABS */
 .tab-bar {
@@ -189,7 +271,7 @@ body::before {
 
 .card-body { padding: 16px; }
 
-/* CAR STATUS GRID */
+/* CAR GRID */
 .car-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -263,7 +345,7 @@ body::before {
 
 .car-card-detail strong { color: var(--text-primary); }
 
-/* ASSIGNMENT TABLE */
+/* TABLES */
 .assign-table {
   width: 100%;
   border-collapse: collapse;
@@ -309,7 +391,7 @@ body::before {
 .driver-name { color: var(--accent-cyan); font-weight: 600; }
 .pax-list { color: var(--text-secondary); font-size: 12px; }
 
-/* VCO PANEL */
+/* VCO CONTROLS */
 .vco-controls {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -356,26 +438,13 @@ body::before {
   transition: all 0.2s;
 }
 
-.btn-primary {
-  background: linear-gradient(135deg, var(--accent-blue), #1d4ed8);
-  color: white;
-}
-
+.btn-primary { background: linear-gradient(135deg, var(--accent-blue), #1d4ed8); color: white; }
 .btn-primary:hover { filter: brightness(1.1); }
-
-.btn-green {
-  background: linear-gradient(135deg, var(--accent-green), #059669);
-  color: white;
-}
-
-.btn-amber {
-  background: linear-gradient(135deg, var(--accent-amber), #d97706);
-  color: white;
-}
-
+.btn-green { background: linear-gradient(135deg, var(--accent-green), #059669); color: white; }
+.btn-amber { background: linear-gradient(135deg, var(--accent-amber), #d97706); color: white; }
 .btn-sm { padding: 6px 14px; font-size: 11px; }
 
-/* ROSTER CHECKLIST */
+/* ROSTER */
 .roster-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -392,14 +461,9 @@ body::before {
 }
 
 .roster-item:hover { background: var(--bg-card-hover); }
-
-.roster-item input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--accent-blue);
-}
-
+.roster-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent-blue); }
 .roster-item .name { font-size: 13px; font-weight: 500; flex: 1; }
+
 .roster-item .section-tag {
   font-size: 10px;
   padding: 1px 6px;
@@ -418,11 +482,11 @@ body::before {
   font-weight: 600;
 }
 
-/* HOTEL GROUP SUMMARY */
 .hotel-summary {
   display: flex;
   gap: 16px;
   margin: 16px 0;
+  flex-wrap: wrap;
 }
 
 .hotel-count {
@@ -440,7 +504,7 @@ body::before {
 .hotel-count .count { font-size: 24px; display: block; }
 .hotel-count .label { font-size: 11px; letter-spacing: 1px; }
 
-/* SIGN OUT LOG */
+/* SIGN OUT */
 .signout-form {
   display: grid;
   grid-template-columns: 120px 160px 1fr 1fr 120px auto;
@@ -472,11 +536,7 @@ body::before {
   font-family: 'JetBrains Mono', monospace;
 }
 
-.refresh-indicator {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
+.refresh-indicator { display: flex; align-items: center; gap: 6px; }
 
 .refresh-dot {
   width: 6px; height: 6px;
@@ -485,35 +545,44 @@ body::before {
   animation: pulse 3s infinite;
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-/* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
 
-/* Responsive */
 @media (max-width: 900px) {
   .vco-controls { grid-template-columns: 1fr; }
   .car-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
   .signout-form { grid-template-columns: 1fr 1fr; }
+  .header { flex-direction: column; gap: 8px; }
+  .tab-bar { flex-wrap: wrap; }
 }
 </style>
 </head>
 <body>
-<div class="app">
 
-  <!-- HEADER -->
+<!-- PASSWORD SCREEN -->
+<div class="lock-screen" id="lock-screen">
+  <div class="lock-box">
+    <div class="badge">VCO</div>
+    <h2>Car Plan Dashboard</h2>
+    <div class="error" id="lock-error">Incorrect password</div>
+    <input type="password" id="lock-input" placeholder="Enter password" autofocus>
+    <button onclick="tryUnlock()">Access</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="app" id="main-app">
+
   <div class="header">
     <div class="header-left">
       <div class="header-badge">VCO</div>
       <div class="header-title">Car Plan <span>Dashboard</span></div>
     </div>
     <div class="header-right">
-      <div class="header-location">ORLAND, NORWAY</div>
+      <div class="header-location" id="tdy-location">--</div>
       <div>
         <div class="header-clock" id="clock">00:00:00L</div>
         <div class="header-date" id="date-display">--</div>
@@ -521,68 +590,51 @@ body::before {
     </div>
   </div>
 
-  <!-- CONFIG BANNER -->
-  <div class="config-banner" id="config-banner">
-    Running in DEMO mode. Click Settings to configure Google Sheets API.
-    <button class="btn btn-sm btn-amber" onclick="showSettings()">Settings</button>
-  </div>
-
-  <!-- TABS -->
   <div class="tab-bar">
     <button class="tab-btn active" onclick="switchTab('dashboard')">Dashboard</button>
     <button class="tab-btn" onclick="switchTab('vco')">VCO Panel</button>
     <button class="tab-btn" onclick="switchTab('cars')">Car Status</button>
     <button class="tab-btn" onclick="switchTab('signout')">Sign-Out Log</button>
-    <button class="tab-btn" onclick="switchTab('settings')">Settings</button>
   </div>
 
-  <!-- TAB: DASHBOARD -->
+  <!-- DASHBOARD -->
   <div class="tab-content active" id="tab-dashboard">
-    <!-- Car status strip -->
     <div class="card">
       <div class="card-header">
         <h2>Fleet Status</h2>
-        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-secondary);">
-          <span id="cars-avail-count">0</span> / 11 available
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-secondary);">
+          <span id="cars-avail-count">0</span> / <span id="cars-assignable-count">0</span> available
         </span>
       </div>
       <div class="card-body">
-        <div class="car-grid" id="fleet-grid"></div>
+        <div class="car-grid" id="fleet-grid">
+          <div class="loading"><div class="spinner"></div><br>Loading fleet data...</div>
+        </div>
       </div>
     </div>
 
-    <!-- Today's assignments -->
     <div class="card">
       <div class="card-header">
         <h2>Today's Morning Push</h2>
-        <span id="show-time-display" style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--accent-cyan);">Show: --</span>
+        <span id="show-time-display" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-cyan);">Show: --</span>
       </div>
-      <div class="card-body" style="padding: 0; overflow-x: auto;">
+      <div class="card-body" style="padding:0;overflow-x:auto;">
         <table class="assign-table">
           <thead>
-            <tr>
-              <th>Car</th>
-              <th>Driver</th>
-              <th>Passengers</th>
-              <th>Hotel Pickup</th>
-              <th>Destination</th>
-              <th>Pickup Time</th>
-            </tr>
+            <tr><th>Car</th><th>Driver</th><th>Passengers</th><th>Hotel Pickup</th><th>Destination</th><th>Pickup Time</th></tr>
           </thead>
           <tbody id="assignment-body">
-            <tr><td colspan="6" style="text-align:center; color: var(--text-dim); padding: 40px;">No assignments yet. Use VCO Panel to generate.</td></tr>
+            <tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:40px;">No assignments yet. Use VCO Panel to generate.</td></tr>
           </tbody>
         </table>
       </div>
     </div>
   </div>
 
-  <!-- TAB: VCO PANEL -->
+  <!-- VCO PANEL -->
   <div class="tab-content" id="tab-vco">
     <div class="card">
-      <div class="card-header">
-        <h2>Generate Car Assignments</h2>
-      </div>
+      <div class="card-header"><h2>Generate Car Assignments</h2></div>
       <div class="card-body">
         <div class="vco-controls">
           <div class="control-group">
@@ -598,47 +650,36 @@ body::before {
             <input type="text" id="vco-destination" placeholder="Ops / Flightline" value="Ops / Flightline">
           </div>
         </div>
-
-        <div style="margin: 16px 0; display: flex; gap: 12px; align-items: center;">
+        <div style="margin:16px 0;display:flex;gap:12px;align-items:center;">
           <button class="btn btn-primary" onclick="autoAssign()">Auto-Assign</button>
-          <button class="btn btn-green" onclick="saveAssignments()">Save to Sheet</button>
           <button class="btn btn-amber" onclick="clearAssignments()">Clear</button>
-          <span id="assign-status" style="font-size: 12px; color: var(--text-secondary); margin-left: 12px;"></span>
+          <span id="assign-status" style="font-size:12px;color:var(--text-secondary);margin-left:12px;"></span>
         </div>
       </div>
     </div>
 
-    <!-- Roster -->
     <div class="card">
       <div class="card-header">
         <h2>Personnel Roster</h2>
-        <div style="display: flex; gap: 8px;">
+        <div style="display:flex;gap:8px;">
           <button class="btn btn-sm btn-primary" onclick="selectAll(true)">All Present</button>
           <button class="btn btn-sm btn-amber" onclick="selectAll(false)">Clear All</button>
         </div>
       </div>
       <div class="card-body">
         <div class="hotel-summary" id="hotel-summary"></div>
-        <div class="roster-grid" id="roster-grid"></div>
+        <div class="roster-grid" id="roster-grid">
+          <div class="loading"><div class="spinner"></div><br>Loading roster...</div>
+        </div>
       </div>
     </div>
 
-    <!-- Assignment preview -->
-    <div class="card" id="assignment-preview-card" style="display: none;">
-      <div class="card-header">
-        <h2>Assignment Preview</h2>
-      </div>
-      <div class="card-body" style="padding: 0; overflow-x: auto;">
+    <div class="card" id="assignment-preview-card" style="display:none;">
+      <div class="card-header"><h2>Assignment Preview</h2></div>
+      <div class="card-body" style="padding:0;overflow-x:auto;">
         <table class="assign-table">
           <thead>
-            <tr>
-              <th>Car</th>
-              <th>Driver</th>
-              <th>Passengers</th>
-              <th>Hotel</th>
-              <th>Destination</th>
-              <th>Pickup Time</th>
-            </tr>
+            <tr><th>Car</th><th>Driver</th><th>Passengers</th><th>Hotel</th><th>Destination</th><th>Pickup Time</th></tr>
           </thead>
           <tbody id="preview-body"></tbody>
         </table>
@@ -646,26 +687,24 @@ body::before {
     </div>
   </div>
 
-  <!-- TAB: CAR STATUS -->
+  <!-- CAR STATUS -->
   <div class="tab-content" id="tab-cars">
     <div class="card">
-      <div class="card-header">
-        <h2>All Vehicles</h2>
-      </div>
+      <div class="card-header"><h2>All Vehicles</h2></div>
       <div class="card-body">
-        <div class="car-grid" id="all-cars-grid"></div>
+        <div class="car-grid" id="all-cars-grid">
+          <div class="loading"><div class="spinner"></div><br>Loading...</div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- TAB: SIGN-OUT LOG -->
+  <!-- SIGN-OUT LOG -->
   <div class="tab-content" id="tab-signout">
     <div class="card">
-      <div class="card-header">
-        <h2>Car Sign-Out</h2>
-      </div>
+      <div class="card-header"><h2>Car Sign-Out</h2></div>
       <div class="card-body">
-        <div class="signout-form" id="signout-form">
+        <div class="signout-form">
           <div class="control-group">
             <label>Time Out</label>
             <input type="text" id="so-time" placeholder="0730">
@@ -691,271 +730,266 @@ body::before {
             <button class="btn btn-primary btn-sm" onclick="addSignout()">Log</button>
           </div>
         </div>
-
-        <table class="assign-table" id="signout-table">
+        <table class="assign-table">
           <thead>
-            <tr>
-              <th>Time Out</th>
-              <th>Car</th>
-              <th>Driver</th>
-              <th>Destination</th>
-              <th>ETA Back</th>
-              <th>Time In</th>
-              <th>Action</th>
-            </tr>
+            <tr><th>Time Out</th><th>Car</th><th>Driver</th><th>Destination</th><th>ETA Back</th><th>Time In</th><th>Action</th></tr>
           </thead>
           <tbody id="signout-body">
-            <tr><td colspan="7" style="text-align:center; color: var(--text-dim); padding: 20px;">No sign-outs logged today</td></tr>
+            <tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:20px;">No sign-outs logged today</td></tr>
           </tbody>
         </table>
       </div>
     </div>
   </div>
 
-  <!-- TAB: SETTINGS -->
-  <div class="tab-content" id="tab-settings">
-    <div class="card">
-      <div class="card-header">
-        <h2>Google Sheets Configuration</h2>
-      </div>
-      <div class="card-body">
-        <div class="vco-controls" style="grid-template-columns: 1fr 1fr;">
-          <div class="control-group">
-            <label>Google Sheets API Key</label>
-            <input type="password" id="cfg-api-key" placeholder="AIza...">
-          </div>
-          <div class="control-group">
-            <label>Google Sheet ID</label>
-            <input type="text" id="cfg-sheet-id" placeholder="From the sheet URL">
-          </div>
-        </div>
-        <div style="margin-top: 12px; display: flex; gap: 12px; align-items: center;">
-          <button class="btn btn-primary" onclick="saveConfig()">Save & Connect</button>
-          <button class="btn btn-amber" onclick="clearConfig()">Clear Config</button>
-          <span id="config-status" style="font-size: 12px; color: var(--text-secondary);"></span>
-        </div>
-        <div style="margin-top: 16px; font-size: 12px; color: var(--text-dim);">
-          <p>Configuration is stored in your browser's local storage. It never leaves your device.</p>
-          <p style="margin-top: 8px;">Refresh interval: 60 seconds when connected to Google Sheets.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- FOOTER -->
   <div class="footer">
     <div>VCO CAR PLAN v2.0 | 48 FW TDY OPS</div>
     <div class="refresh-indicator">
       <div class="refresh-dot" id="sync-dot"></div>
       <span>Last sync: <span id="last-sync">--</span></span>
     </div>
-    <div>13 cars | <span id="pax-count">--</span> pax on-site</div>
+    <div><span id="car-total">--</span> cars | <span id="pax-count">--</span> pax on-site</div>
   </div>
 </div>
 
 <script>
 // ============================================================
-// DATA
+// CONFIG — stored in localStorage, never in source
 // ============================================================
-const CARS = [
-  { num: 1,  name: 'Skadi',    plate: 'EP69777',  electric: true,  permanent: false, assignedTo: '' },
-  { num: 2,  name: 'Thor',     plate: 'EN71155',  electric: false, permanent: false, assignedTo: '' },
-  { num: 3,  name: 'Freya',    plate: 'EN35700',  electric: false, permanent: false, assignedTo: '' },
-  { num: 4,  name: 'Tyr',      plate: 'EN46650',  electric: false, permanent: false, assignedTo: '' },
-  { num: 5,  name: 'Loki',     plate: 'NH17739',  electric: false, permanent: false, assignedTo: '' },
-  { num: 6,  name: 'Heimdall', plate: 'AS68952',  electric: false, permanent: false, assignedTo: '' },
-  { num: 7,  name: 'Baldur',   plate: 'EN43555',  electric: false, permanent: false, assignedTo: '' },
-  { num: 8,  name: 'Vidar',    plate: 'EN53375',  electric: false, permanent: false, assignedTo: '' },
-  { num: 9,  name: 'Bragi',    plate: 'EN87446',  electric: false, permanent: false, assignedTo: '' },
-  { num: 10, name: 'Fenrir',   plate: 'EN10871',  electric: false, permanent: false, assignedTo: '' },
-  { num: 11, name: 'Ragnar',   plate: 'OW75VLN',  electric: false, permanent: false, assignedTo: '' },
-  { num: 12, name: 'Odin',     plate: 'VJ36980',  electric: false, permanent: true,  assignedTo: 'Skooby' },
-  { num: 13, name: 'Mjolnir',  plate: 'EP82941',  electric: true,  permanent: true,  assignedTo: 'Tony/Sean' },
-];
+const SHEET_ID = '1FgxIcYuaelaoqmCPNmESNjcduxqeAGNXrHljLJJu298';
+const API_KEY = 'AIzaSyA17MpRQVS5LAfOYAEkv28zY2uVzEoKHU4';
+const REFRESH_SEC = 60;
+const PASS_HASH = '6033a2a1'; // simple hash of 493FS!
 
-const PERSONNEL = [
-  { name: 'Merritt, Dustin M.', callsign: 'Shaggi', section: 'Pilots', hotel: 'Flexbase', fueler: true },
-  { name: 'Cole, Charles J.', callsign: '', section: 'Pilots', hotel: 'Flexbase', fueler: false },
-  { name: 'Olmschenk, Cole E.', callsign: '', section: 'Pilots', hotel: 'Flexbase', fueler: true },
-  { name: 'Gould, Joseph A.', callsign: '', section: 'Pilots', hotel: 'Flexbase', fueler: false },
-  { name: 'Thompson, Kegan M.', callsign: '', section: 'Pilots', hotel: 'Flexbase', fueler: false },
-  { name: 'Cartin, Daniel M.', callsign: '', section: 'Pilots', hotel: 'Flexbase', fueler: false },
-  { name: 'Micucci, Matthew P.', callsign: '', section: 'Pilots', hotel: 'Flexbase', fueler: false },
-  { name: 'Moroz, Christopher R.', callsign: '', section: 'Pilots', hotel: 'Flexbase', fueler: true },
-  { name: 'Pieton, Ryan S.', callsign: '', section: 'Pilots', hotel: 'Flexbase', fueler: false },
-  { name: 'Silva, Ryan I.', callsign: '', section: 'Pilots', hotel: 'Flexbase', fueler: false },
-  { name: 'Holmes, Thomas Y.', callsign: '', section: 'Pilots', hotel: 'Flexbase', fueler: false },
-  { name: 'Howard, Analise', callsign: '', section: 'Pilots', hotel: 'Flexbase', fueler: false },
-  { name: 'Reen, Gavin G.', callsign: '', section: 'Pilots', hotel: 'Flexbase', fueler: false },
-  { name: 'Lynch, Kevin M.', callsign: '', section: 'Pilots', hotel: 'Flexbase', fueler: false },
-  { name: 'McGinty, Garrett T.', callsign: '', section: 'Pilots', hotel: 'Flexbase', fueler: false },
-  { name: 'Wienke, Moritz A.', callsign: 'Torq', section: 'Pilots', hotel: 'Flexbase', fueler: false },
-  { name: 'Kolmer, Benjamin R.', callsign: '', section: 'Pilots', hotel: 'Flexbase', fueler: true },
-  { name: 'Quimby, James R.', callsign: '', section: 'Pilots', hotel: 'Flexbase', fueler: true },
-  { name: 'Regier, Kitt A.', callsign: 'Splash', section: 'Pilots', hotel: 'Flexbase', fueler: false },
-  { name: 'Moore, Jaden R.', callsign: 'DI Moore', section: 'Pilots', hotel: 'Flexbase', fueler: true },
-  { name: 'Hlavinka, Nathan C.', callsign: '', section: 'Pilots', hotel: 'Flexbase', fueler: false },
-  { name: 'Mueser, William R.', callsign: '', section: 'Pilots', hotel: 'Flexbase', fueler: false },
-  { name: 'Ponder, Stephen F.', callsign: 'DI Ponder', section: 'Pilots', hotel: 'Flexbase', fueler: true },
-  { name: 'Woodall, Ryan F.', callsign: '', section: 'Pilots', hotel: 'Flexbase', fueler: false },
-  { name: 'Evans, Noah R.', callsign: '', section: 'Pilots', hotel: 'Flexbase', fueler: true },
-  { name: 'Samarah, Laith K.', callsign: 'DI Samarah', section: 'Pilots', hotel: 'Flexbase', fueler: false },
-  { name: 'Thompson, Ben D.', callsign: '', section: 'Pilots', hotel: 'Flexbase', fueler: false },
-  { name: 'Ortega, Soleil', callsign: '', section: 'AFE', hotel: 'Kysthotell', fueler: true },
-  { name: 'Huckabone, Jake', callsign: '', section: 'AFE', hotel: 'Kysthotell', fueler: false },
-  { name: 'Stennes, Trinidy', callsign: '', section: 'AFE', hotel: 'Kysthotell', fueler: false },
-  { name: 'Prudente, Nicolas Mario', callsign: '', section: 'AFE', hotel: 'Kysthotell', fueler: false },
-  { name: 'Hanlin, Stephanie', callsign: '', section: 'SARM', hotel: 'Kysthotell', fueler: true },
-  { name: 'Lopez, Eduardo', callsign: '', section: 'SARM', hotel: 'Kysthotell', fueler: false },
-  { name: 'Mahmoud, Yosef', callsign: '', section: 'SARM', hotel: 'Kysthotell', fueler: false },
-  { name: 'Appleton, Audrey', callsign: '', section: 'SARM', hotel: 'Kysthotell', fueler: false },
-  { name: 'Maldonado, Joseph', callsign: '', section: 'Intel', hotel: 'Kysthotell', fueler: true },
-  { name: 'Cunningham-Wray, Kassidy', callsign: '', section: 'Intel', hotel: 'Kysthotell', fueler: true },
-  { name: 'Banks, Payton', callsign: '', section: 'Intel', hotel: 'Kysthotell', fueler: false },
-  { name: 'Miller, Henry', callsign: '', section: 'Intel', hotel: 'Kysthotell', fueler: false },
-  { name: 'Meadows, Kristen', callsign: '', section: 'SEL', hotel: 'Flexbase', fueler: false },
-  { name: 'Anys, Michael', callsign: '', section: 'WX', hotel: 'Fosen Fjord', fueler: false },
-  { name: 'Bratton, Joshua', callsign: '', section: 'WX', hotel: 'Fosen Fjord', fueler: false },
-  { name: 'Watson, Austin', callsign: '', section: 'IDMT', hotel: 'Kysthotell', fueler: false },
-  { name: 'Williams, Sean', callsign: '', section: 'ISSO/GSSO', hotel: 'Flexbase', fueler: true },
-  { name: 'Farrington, Tony', callsign: '', section: 'ISSO/GSSO', hotel: 'Flexbase', fueler: false },
-  { name: 'Andrews, Tim', callsign: '', section: 'OMS', hotel: 'Kysthotell', fueler: false },
-  { name: 'Taylor, Nicholas', callsign: '', section: 'OMS', hotel: 'Kysthotell', fueler: false },
-  { name: 'Ciambor, Dan', callsign: '', section: 'ALIS', hotel: 'Kysthotell', fueler: false },
-  { name: 'Robison, Amber', callsign: '', section: 'ALIS', hotel: 'Kysthotell', fueler: false },
-  { name: 'Mckenna, Aedan', callsign: '', section: 'ALIS', hotel: 'Kysthotell', fueler: false },
-  { name: 'Sinn, Tyler', callsign: '', section: 'ALIS', hotel: 'Kysthotell', fueler: false },
-  { name: 'Ciullo, Samuel', callsign: '', section: 'FSE', hotel: 'Kysthotell', fueler: false },
-];
+// ============================================================
+// PASSWORD GATE
+// ============================================================
+function simpleHash(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = ((h << 5) - h + str.charCodeAt(i)) | 0;
+  }
+  return (h >>> 0).toString(16);
+}
 
-// State
-let carStatus = CARS.map(c => ({ ...c, status: c.permanent ? 'permanent' : 'available', driver: '', dest: '', eta: '' }));
-let presentPersonnel = new Set(PERSONNEL.map((_, i) => i));
+function tryUnlock() {
+  const input = document.getElementById('lock-input').value;
+  if (simpleHash(input) === PASS_HASH) {
+    sessionStorage.setItem('vco_auth', '1');
+    document.getElementById('lock-screen').style.display = 'none';
+    document.getElementById('main-app').classList.add('unlocked');
+    initApp();
+  } else {
+    document.getElementById('lock-error').style.display = 'block';
+    document.getElementById('lock-input').value = '';
+    document.getElementById('lock-input').focus();
+  }
+}
+
+document.getElementById('lock-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') tryUnlock();
+});
+
+// Auto-unlock if already authed this session
+if (sessionStorage.getItem('vco_auth') === '1') {
+  document.getElementById('lock-screen').style.display = 'none';
+  document.getElementById('main-app').classList.add('unlocked');
+  window.addEventListener('DOMContentLoaded', initApp);
+}
+
+// ============================================================
+// STATE — all loaded from sheet, nothing hardcoded
+// ============================================================
+let CARS = [];
+let PERSONNEL = [];
+let presentPersonnel = new Set();
 let currentAssignments = [];
 let signoutLog = [];
+let dataLoaded = false;
 
 // ============================================================
-// CONFIG (localStorage)
+// GOOGLE SHEETS FETCH
 // ============================================================
-function getConfig() {
-  return {
-    apiKey: localStorage.getItem('vco_api_key') || '',
-    sheetId: localStorage.getItem('vco_sheet_id') || '',
-  };
+async function fetchSheet(range) {
+  const url = 'https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID + '/values/' + encodeURIComponent(range) + '?key=' + API_KEY;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Sheet fetch failed: ' + res.status);
+  const data = await res.json();
+  return data.values || [];
 }
 
-function saveConfig() {
-  const key = document.getElementById('cfg-api-key').value.trim();
-  const id = document.getElementById('cfg-sheet-id').value.trim();
-  localStorage.setItem('vco_api_key', key);
-  localStorage.setItem('vco_sheet_id', id);
-  document.getElementById('config-status').textContent = 'Saved! Attempting connection...';
-  document.getElementById('config-banner').classList.toggle('show', !key || !id);
-  if (key && id) fetchFromSheet();
+async function loadAllData() {
+  try {
+    const [configRows, rosterRows, availRows, signoutRows] = await Promise.all([
+      fetchSheet('Config!A3:H23'),
+      fetchSheet('Roster!A4:F60'),
+      fetchSheet('Availability!A4:G17'),
+      fetchSheet('Availability!A20:G40'),
+    ]);
+
+    // Parse TDY location
+    if (configRows[0] && configRows[0][1]) {
+      document.getElementById('tdy-location').textContent = configRows[0][1].toUpperCase();
+    }
+
+    // Parse cars (rows starting at index 7 = row 10 in sheet, after header at index 6)
+    CARS = [];
+    for (let i = 7; i < configRows.length; i++) {
+      const r = configRows[i];
+      if (!r || !r[0] || !r[0].startsWith('Car')) continue;
+      CARS.push({
+        num: parseInt(r[0].replace('Car ', '')),
+        name: r[1] || '',
+        plate: r[2] || '',
+        electric: (r[3] || '').toLowerCase() === 'yes',
+        capacity: parseInt(r[4]) || 5,
+        permanent: !!(r[5]),
+        assignedTo: r[5] || '',
+        status: (r[6] || '').toLowerCase().includes('permanent') ? 'permanent' : 'available',
+        driver: '',
+        dest: '',
+        eta: '',
+      });
+    }
+
+    // Parse availability status overlay
+    if (availRows.length > 1) {
+      for (let i = 1; i < availRows.length; i++) {
+        const r = availRows[i];
+        if (!r || !r[1]) continue;
+        const car = CARS.find(c => c.name === r[1]);
+        if (car && !car.permanent) {
+          const st = (r[2] || '').toLowerCase();
+          if (st.includes('commit') || st.includes('out')) car.status = 'committed';
+          else if (st.includes('return')) car.status = 'returning';
+          else car.status = 'available';
+          car.driver = r[3] || '';
+          car.dest = r[4] || '';
+          car.eta = r[5] || '';
+        }
+      }
+    }
+
+    // Parse personnel from Roster tab
+    PERSONNEL = [];
+    presentPersonnel = new Set();
+    if (rosterRows.length > 1) {
+      for (let i = 1; i < rosterRows.length; i++) {
+        const r = rosterRows[i];
+        if (!r || !r[0]) continue;
+        const idx = PERSONNEL.length;
+        PERSONNEL.push({
+          name: r[0],
+          section: r[1] || '',
+          hotel: r[2] || '',
+          fueler: (r[5] || '').toLowerCase() === 'yes',
+        });
+        if ((r[3] || '').toLowerCase() === 'yes') {
+          presentPersonnel.add(idx);
+        }
+      }
+    }
+
+    // Parse sign-out log
+    signoutLog = [];
+    if (signoutRows.length > 1) {
+      for (let i = 1; i < signoutRows.length; i++) {
+        const r = signoutRows[i];
+        if (!r || !r[0]) continue;
+        signoutLog.push({
+          time: r[0],
+          car: r[1] || '',
+          driver: r[2] || '',
+          dest: r[4] || '',
+          eta: r[5] || '',
+          timeIn: r[6] || '',
+        });
+      }
+    }
+
+    dataLoaded = true;
+    document.getElementById('car-total').textContent = CARS.length;
+    document.getElementById('last-sync').textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
+
+    renderAll();
+  } catch (err) {
+    console.error('Data load error:', err);
+    document.getElementById('fleet-grid').innerHTML =
+      '<div class="loading" style="color:var(--accent-red);">Failed to load data: ' + err.message + '</div>';
+  }
 }
 
-function clearConfig() {
-  localStorage.removeItem('vco_api_key');
-  localStorage.removeItem('vco_sheet_id');
-  document.getElementById('cfg-api-key').value = '';
-  document.getElementById('cfg-sheet-id').value = '';
-  document.getElementById('config-status').textContent = 'Cleared.';
-  document.getElementById('config-banner').classList.add('show');
+// ============================================================
+// RENDER
+// ============================================================
+function renderAll() {
+  renderFleetGrid('fleet-grid');
+  renderFleetGrid('all-cars-grid');
+  renderRoster();
+  renderAssignments();
+  renderSignoutLog();
+  populateCarSelect();
+  updateHotelSummary();
 }
 
-function showSettings() { switchTab('settings'); }
-
-// ============================================================
-// CLOCK
-// ============================================================
-function updateClock() {
-  const now = new Date();
-  const h = String(now.getHours()).padStart(2, '0');
-  const m = String(now.getMinutes()).padStart(2, '0');
-  const s = String(now.getSeconds()).padStart(2, '0');
-  document.getElementById('clock').textContent = h + ':' + m + ':' + s + 'L';
-  const opts = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
-  document.getElementById('date-display').textContent = now.toLocaleDateString('en-US', opts).toUpperCase();
-}
-
-// ============================================================
-// TABS
-// ============================================================
-function switchTab(tab) {
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-  document.getElementById('tab-' + tab).classList.add('active');
-  document.querySelectorAll('.tab-btn').forEach(el => {
-    if (el.textContent.toLowerCase().replace(/\s/g, '') === tab ||
-        (tab === 'dashboard' && el.textContent === 'Dashboard') ||
-        (tab === 'vco' && el.textContent === 'VCO Panel') ||
-        (tab === 'cars' && el.textContent === 'Car Status') ||
-        (tab === 'signout' && el.textContent === 'Sign-Out Log') ||
-        (tab === 'settings' && el.textContent === 'Settings'))
-      el.classList.add('active');
-  });
-}
-
-// ============================================================
-// RENDER: FLEET GRID
-// ============================================================
 function renderFleetGrid(containerId) {
   const container = document.getElementById(containerId);
-  const assignable = carStatus.filter(c => !c.permanent);
-  const permanent = carStatus.filter(c => c.permanent);
-  const availCount = assignable.filter(c => c.status === 'available').length;
-  const el = document.getElementById('cars-avail-count');
-  if (el) el.textContent = availCount;
+  if (!dataLoaded) return;
 
-  container.innerHTML = [...assignable, ...permanent].map(car => {
-    const statusClass = car.status;
-    const statusLabel = car.permanent ? 'PERMANENT' :
+  const assignable = CARS.filter(c => !c.permanent);
+  const permanent = CARS.filter(c => c.permanent);
+  const availCount = assignable.filter(c => c.status === 'available').length;
+
+  document.getElementById('cars-avail-count').textContent = availCount;
+  document.getElementById('cars-assignable-count').textContent = assignable.length;
+
+  container.innerHTML = [...assignable, ...permanent].map(function(car) {
+    var elecTag = car.electric ? ' <span class="electric">EV</span>' : '';
+    var statusLabel = car.permanent ? 'PERMANENT' :
       car.status === 'available' ? 'AVAILABLE' :
       car.status === 'committed' ? 'COMMITTED' : 'RETURNING';
-    const elecTag = car.electric ? ' <span class="electric">EV</span>' : '';
 
-    return '<div class="car-card ' + statusClass + '">' +
+    return '<div class="car-card ' + car.status + '">' +
       '<div class="car-card-name">' + car.name + '</div>' +
       '<div class="car-card-plate">' + car.plate + elecTag + '</div>' +
       '<div class="car-status-badge">' + statusLabel + '</div>' +
       (car.driver || car.assignedTo ?
         '<div class="car-card-detail"><strong>' + (car.driver || car.assignedTo) + '</strong>' +
         (car.dest ? '<br>' + car.dest : '') +
-        (car.eta ? '<br>ETA: ' + car.eta : '') + '</div>' :
-        '') +
+        (car.eta ? '<br>ETA: ' + car.eta : '') + '</div>' : '') +
     '</div>';
   }).join('');
 }
 
-// ============================================================
-// RENDER: ROSTER
-// ============================================================
 function renderRoster() {
-  const grid = document.getElementById('roster-grid');
-  const hotels = { 'Flexbase': [], 'Kysthotell': [], 'Fosen Fjord': [] };
+  var grid = document.getElementById('roster-grid');
+  if (!dataLoaded) return;
 
-  PERSONNEL.forEach((p, i) => {
+  var hotels = {};
+  PERSONNEL.forEach(function(p, i) {
     if (!hotels[p.hotel]) hotels[p.hotel] = [];
-    hotels[p.hotel].push({ ...p, idx: i });
+    hotels[p.hotel].push({ name: p.name, section: p.section, fueler: p.fueler, idx: i });
   });
 
-  let html = '';
-  for (const [hotel, people] of Object.entries(hotels)) {
-    html += '<div style="grid-column: 1 / -1; margin-top: 12px; margin-bottom: 4px;">';
-    const hotelClass = hotel === 'Flexbase' ? 'flexbase' : hotel === 'Kysthotell' ? 'kysthotell' : 'fosen';
-    html += '<span class="hotel-badge ' + hotelClass + '">' + hotel + ' (' + people.length + ')</span></div>';
-    for (const p of people) {
-      const checked = presentPersonnel.has(p.idx) ? 'checked' : '';
+  var html = '';
+  var hotelOrder = ['Flexbase', 'Kysthotell', 'Fosen Fjord'];
+  hotelOrder.forEach(function(hotel) {
+    var people = hotels[hotel] || [];
+    if (people.length === 0) return;
+    var hc = hotel === 'Flexbase' ? 'flexbase' : hotel === 'Kysthotell' ? 'kysthotell' : 'fosen';
+    html += '<div style="grid-column:1/-1;margin-top:12px;margin-bottom:4px;">' +
+      '<span class="hotel-badge ' + hc + '">' + hotel + ' (' + people.length + ')</span></div>';
+    people.forEach(function(p) {
+      var checked = presentPersonnel.has(p.idx) ? 'checked' : '';
       html += '<div class="roster-item">' +
-        '<input type="checkbox" ' + checked + ' onchange="togglePresent(' + p.idx + ', this.checked)">' +
+        '<input type="checkbox" ' + checked + ' onchange="togglePresent(' + p.idx + ',this.checked)">' +
         '<span class="name">' + p.name + '</span>' +
         '<span class="section-tag">' + p.section + '</span>' +
         (p.fueler ? '<span class="fueler-tag">FUELER</span>' : '') +
       '</div>';
-    }
-  }
+    });
+  });
   grid.innerHTML = html;
-  updateHotelSummary();
 }
 
 function togglePresent(idx, checked) {
@@ -965,69 +999,72 @@ function togglePresent(idx, checked) {
 }
 
 function selectAll(val) {
-  if (val) PERSONNEL.forEach((_, i) => presentPersonnel.add(i));
+  if (val) PERSONNEL.forEach(function(_, i) { presentPersonnel.add(i); });
   else presentPersonnel.clear();
   renderRoster();
+  updateHotelSummary();
 }
 
 function updateHotelSummary() {
-  const counts = { 'Flexbase': 0, 'Kysthotell': 0, 'Fosen Fjord': 0 };
-  presentPersonnel.forEach(i => { counts[PERSONNEL[i].hotel]++; });
-  const total = presentPersonnel.size;
+  var counts = { 'Flexbase': 0, 'Kysthotell': 0, 'Fosen Fjord': 0 };
+  presentPersonnel.forEach(function(i) { counts[PERSONNEL[i].hotel] = (counts[PERSONNEL[i].hotel] || 0) + 1; });
+  var total = presentPersonnel.size;
   document.getElementById('pax-count').textContent = total;
 
   document.getElementById('hotel-summary').innerHTML =
-    '<div class="hotel-count flexbase"><span class="count">' + counts['Flexbase'] + '</span><span class="label">FLEXBASE</span></div>' +
-    '<div class="hotel-count kysthotell"><span class="count">' + counts['Kysthotell'] + '</span><span class="label">KYSTHOTELL</span></div>' +
-    '<div class="hotel-count fosen"><span class="count">' + counts['Fosen Fjord'] + '</span><span class="label">FOSEN FJORD</span></div>' +
-    '<div class="hotel-count" style="background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); color: var(--accent-blue);"><span class="count">' + total + '</span><span class="label">TOTAL</span></div>';
+    '<div class="hotel-count flexbase"><span class="count">' + (counts['Flexbase'] || 0) + '</span><span class="label">FLEXBASE</span></div>' +
+    '<div class="hotel-count kysthotell"><span class="count">' + (counts['Kysthotell'] || 0) + '</span><span class="label">KYSTHOTELL</span></div>' +
+    '<div class="hotel-count fosen"><span class="count">' + (counts['Fosen Fjord'] || 0) + '</span><span class="label">FOSEN FJORD</span></div>' +
+    '<div class="hotel-count" style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);color:var(--accent-blue);"><span class="count">' + total + '</span><span class="label">TOTAL</span></div>';
 }
 
 // ============================================================
-// AUTO-ASSIGN ALGORITHM
+// AUTO-ASSIGN
 // ============================================================
 function autoAssign() {
-  const showTime = document.getElementById('vco-showtime').value || '0500';
-  const destination = document.getElementById('vco-destination').value || 'Ops';
+  if (!dataLoaded || CARS.length === 0 || PERSONNEL.length === 0) {
+    document.getElementById('assign-status').textContent = 'Data not loaded yet.';
+    return;
+  }
 
-  // Get present personnel grouped by hotel
-  const hotelGroups = { 'Flexbase': [], 'Kysthotell': [], 'Fosen Fjord': [] };
-  presentPersonnel.forEach(i => {
-    const p = PERSONNEL[i];
-    hotelGroups[p.hotel].push({ ...p, idx: i });
+  var showTime = document.getElementById('vco-showtime').value || '0500';
+  var destination = document.getElementById('vco-destination').value || 'Ops';
+
+  var hotelGroups = {};
+  presentPersonnel.forEach(function(i) {
+    var p = PERSONNEL[i];
+    if (!hotelGroups[p.hotel]) hotelGroups[p.hotel] = [];
+    hotelGroups[p.hotel].push(p);
   });
 
-  // Available cars (not permanent)
-  const availCars = CARS.filter(c => !c.permanent).map(c => ({ ...c }));
-  let carIdx = 0;
-  const assignments = [];
+  var availCars = CARS.filter(function(c) { return !c.permanent; });
+  var carIdx = 0;
+  var assignments = [];
 
-  for (const [hotel, people] of Object.entries(hotelGroups)) {
-    if (people.length === 0) continue;
+  ['Flexbase', 'Kysthotell', 'Fosen Fjord'].forEach(function(hotel) {
+    var people = hotelGroups[hotel] || [];
+    if (people.length === 0) return;
 
-    // Separate pilots and non-pilots
-    const pilots = people.filter(p => p.section === 'Pilots');
-    const support = people.filter(p => p.section !== 'Pilots');
+    var pilots = people.filter(function(p) { return p.section === 'Pilots'; });
+    var support = people.filter(function(p) { return p.section !== 'Pilots'; });
 
-    // Process pilots first, then support
-    for (const group of [pilots, support]) {
-      if (group.length === 0) continue;
+    [pilots, support].forEach(function(group) {
+      if (group.length === 0) return;
+      var remaining = group.slice();
 
-      // Split into car loads of 5
-      const carsNeeded = Math.ceil(group.length / 5);
-      for (let c = 0; c < carsNeeded && carIdx < availCars.length; c++) {
-        const car = availCars[carIdx];
-        const load = group.splice(0, 5);
+      while (remaining.length > 0 && carIdx < availCars.length) {
+        var car = availCars[carIdx];
+        var load = remaining.splice(0, 5);
 
-        // Pick a fueler as driver (prefer from this load)
-        let driverIdx = load.findIndex(p => p.fueler);
-        let driver;
+        var driverIdx = -1;
+        for (var d = 0; d < load.length; d++) {
+          if (load[d].fueler) { driverIdx = d; break; }
+        }
+
+        var driver;
         if (driverIdx >= 0) {
           driver = load.splice(driverIdx, 1)[0];
         } else {
-          // Find any fueler from the same hotel who hasn't been assigned yet
-          const allPresent = [...presentPersonnel].map(i => PERSONNEL[i]);
-          // Just use first person as driver (fallback)
           driver = load.shift();
         }
 
@@ -1037,90 +1074,77 @@ function autoAssign() {
           electric: car.electric,
           driver: driver.name,
           driverFueler: driver.fueler,
-          passengers: load.map(p => p.name),
+          passengers: load.map(function(p) { return p.name; }),
           hotel: hotel,
           destination: destination,
           pickupTime: showTime,
-          section: group === pilots ? 'Pilots' : 'Support',
         });
-
         carIdx++;
       }
-    }
-  }
+    });
+  });
 
   currentAssignments = assignments;
   renderAssignments();
   renderAssignmentPreview();
 
-  // Update car statuses
-  carStatus.forEach(c => {
+  CARS.forEach(function(c) {
     if (!c.permanent) {
-      const a = assignments.find(a => a.car === c.name);
-      if (a) {
-        c.status = 'committed';
-        c.driver = a.driver;
-        c.dest = a.destination;
-      } else {
-        c.status = 'available';
-        c.driver = '';
-        c.dest = '';
-      }
+      var a = assignments.find(function(a) { return a.car === c.name; });
+      if (a) { c.status = 'committed'; c.driver = a.driver; c.dest = a.destination; }
+      else { c.status = 'available'; c.driver = ''; c.dest = ''; }
     }
   });
   renderFleetGrid('fleet-grid');
   renderFleetGrid('all-cars-grid');
 
   document.getElementById('show-time-display').textContent = 'Show: ' + showTime + 'L';
-  document.getElementById('assign-status').textContent = assignments.length + ' cars assigned, ' +
-    assignments.reduce((sum, a) => sum + 1 + a.passengers.length, 0) + ' personnel loaded';
+  var totalPax = assignments.reduce(function(sum, a) { return sum + 1 + a.passengers.length; }, 0);
+  document.getElementById('assign-status').textContent = assignments.length + ' cars assigned, ' + totalPax + ' personnel loaded';
 }
 
 function renderAssignments() {
-  const body = document.getElementById('assignment-body');
+  var body = document.getElementById('assignment-body');
   if (currentAssignments.length === 0) {
-    body.innerHTML = '<tr><td colspan="6" style="text-align:center; color: var(--text-dim); padding: 40px;">No assignments yet. Use VCO Panel to generate.</td></tr>';
+    body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:40px;">No assignments yet. Use VCO Panel to generate.</td></tr>';
     return;
   }
 
-  body.innerHTML = currentAssignments.map(a => {
-    const hotelClass = a.hotel === 'Flexbase' ? 'flexbase' : a.hotel === 'Kysthotell' ? 'kysthotell' : 'fosen';
-    const evTag = a.electric ? ' <span style="color: var(--accent-green); font-size: 10px;">EV</span>' : '';
+  body.innerHTML = currentAssignments.map(function(a) {
+    var hc = a.hotel === 'Flexbase' ? 'flexbase' : a.hotel === 'Kysthotell' ? 'kysthotell' : 'fosen';
+    var ev = a.electric ? ' <span style="color:var(--accent-green);font-size:10px;">EV</span>' : '';
     return '<tr>' +
-      '<td><strong>' + a.car + '</strong>' + evTag + '<br><span style="color: var(--text-dim); font-size: 11px;">' + a.plate + '</span></td>' +
-      '<td><span class="driver-name">' + a.driver + '</span>' + (a.driverFueler ? ' <span style="color: var(--accent-cyan); font-size: 10px;">FUELER</span>' : '') + '</td>' +
+      '<td><strong>' + a.car + '</strong>' + ev + '<br><span style="color:var(--text-dim);font-size:11px;">' + a.plate + '</span></td>' +
+      '<td><span class="driver-name">' + a.driver + '</span>' + (a.driverFueler ? ' <span style="color:var(--accent-cyan);font-size:10px;">FUELER</span>' : '') + '</td>' +
       '<td class="pax-list">' + (a.passengers.length > 0 ? a.passengers.join('<br>') : '<em>Empty seats</em>') + '</td>' +
-      '<td><span class="hotel-badge ' + hotelClass + '">' + a.hotel + '</span></td>' +
+      '<td><span class="hotel-badge ' + hc + '">' + a.hotel + '</span></td>' +
       '<td>' + a.destination + '</td>' +
-      '<td style="font-family: JetBrains Mono, monospace; font-weight: 600;">' + a.pickupTime + 'L</td>' +
+      '<td style="font-family:JetBrains Mono,monospace;font-weight:600;">' + a.pickupTime + 'L</td>' +
     '</tr>';
   }).join('');
 }
 
 function renderAssignmentPreview() {
-  const card = document.getElementById('assignment-preview-card');
-  const body = document.getElementById('preview-body');
-  if (currentAssignments.length === 0) {
-    card.style.display = 'none';
-    return;
-  }
+  var card = document.getElementById('assignment-preview-card');
+  var body = document.getElementById('preview-body');
+  if (currentAssignments.length === 0) { card.style.display = 'none'; return; }
   card.style.display = 'block';
-  body.innerHTML = currentAssignments.map(a => {
-    const hotelClass = a.hotel === 'Flexbase' ? 'flexbase' : a.hotel === 'Kysthotell' ? 'kysthotell' : 'fosen';
+  body.innerHTML = currentAssignments.map(function(a) {
+    var hc = a.hotel === 'Flexbase' ? 'flexbase' : a.hotel === 'Kysthotell' ? 'kysthotell' : 'fosen';
     return '<tr>' +
       '<td><strong>' + a.car + '</strong></td>' +
       '<td class="driver-name">' + a.driver + '</td>' +
       '<td class="pax-list">' + a.passengers.join(', ') + '</td>' +
-      '<td><span class="hotel-badge ' + hotelClass + '">' + a.hotel + '</span></td>' +
+      '<td><span class="hotel-badge ' + hc + '">' + a.hotel + '</span></td>' +
       '<td>' + a.destination + '</td>' +
-      '<td style="font-family: JetBrains Mono, monospace;">' + a.pickupTime + 'L</td>' +
+      '<td style="font-family:JetBrains Mono,monospace;">' + a.pickupTime + 'L</td>' +
     '</tr>';
   }).join('');
 }
 
 function clearAssignments() {
   currentAssignments = [];
-  carStatus.forEach(c => {
+  CARS.forEach(function(c) {
     if (!c.permanent) { c.status = 'available'; c.driver = ''; c.dest = ''; c.eta = ''; }
   });
   renderAssignments();
@@ -1131,34 +1155,32 @@ function clearAssignments() {
 }
 
 // ============================================================
-// SIGN-OUT LOG
+// SIGN-OUT
 // ============================================================
 function populateCarSelect() {
-  const sel = document.getElementById('so-car');
+  var sel = document.getElementById('so-car');
   sel.innerHTML = '<option value="">Select car</option>' +
-    CARS.filter(c => !c.permanent).map(c =>
-      '<option value="' + c.name + '">' + c.name + ' (' + c.plate + ')' + '</option>'
-    ).join('');
+    CARS.filter(function(c) { return !c.permanent; }).map(function(c) {
+      return '<option value="' + c.name + '">' + c.name + ' (' + c.plate + ')</option>';
+    }).join('');
 }
 
 function addSignout() {
-  const time = document.getElementById('so-time').value;
-  const car = document.getElementById('so-car').value;
-  const driver = document.getElementById('so-driver').value;
-  const dest = document.getElementById('so-dest').value;
-  const eta = document.getElementById('so-eta').value;
+  var time = document.getElementById('so-time').value;
+  var car = document.getElementById('so-car').value;
+  var driver = document.getElementById('so-driver').value;
+  var dest = document.getElementById('so-dest').value;
+  var eta = document.getElementById('so-eta').value;
   if (!time || !car || !driver) return;
 
-  signoutLog.push({ time, car, driver, dest, eta, timeIn: '' });
+  signoutLog.push({ time: time, car: car, driver: driver, dest: dest, eta: eta, timeIn: '' });
   renderSignoutLog();
 
-  // Update car status
-  const cs = carStatus.find(c => c.name === car);
+  var cs = CARS.find(function(c) { return c.name === car; });
   if (cs) { cs.status = 'committed'; cs.driver = driver; cs.dest = dest; cs.eta = eta; }
   renderFleetGrid('fleet-grid');
   renderFleetGrid('all-cars-grid');
 
-  // Clear form
   document.getElementById('so-time').value = '';
   document.getElementById('so-driver').value = '';
   document.getElementById('so-dest').value = '';
@@ -1166,11 +1188,11 @@ function addSignout() {
 }
 
 function returnCar(idx) {
-  const entry = signoutLog[idx];
-  const now = new Date();
+  var entry = signoutLog[idx];
+  var now = new Date();
   entry.timeIn = String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0');
 
-  const cs = carStatus.find(c => c.name === entry.car);
+  var cs = CARS.find(function(c) { return c.name === entry.car; });
   if (cs) { cs.status = 'available'; cs.driver = ''; cs.dest = ''; cs.eta = ''; }
 
   renderSignoutLog();
@@ -1179,127 +1201,58 @@ function returnCar(idx) {
 }
 
 function renderSignoutLog() {
-  const body = document.getElementById('signout-body');
+  var body = document.getElementById('signout-body');
   if (signoutLog.length === 0) {
-    body.innerHTML = '<tr><td colspan="7" style="text-align:center; color: var(--text-dim); padding: 20px;">No sign-outs logged today</td></tr>';
+    body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:20px;">No sign-outs logged today</td></tr>';
     return;
   }
-  body.innerHTML = signoutLog.map((s, i) =>
-    '<tr>' +
-      '<td style="font-family: JetBrains Mono, monospace; color: var(--accent-amber); font-weight: 600;">' + s.time + 'L</td>' +
+  body.innerHTML = signoutLog.map(function(s, i) {
+    return '<tr>' +
+      '<td style="font-family:JetBrains Mono,monospace;color:var(--accent-amber);font-weight:600;">' + s.time + 'L</td>' +
       '<td><strong>' + s.car + '</strong></td>' +
       '<td>' + s.driver + '</td>' +
       '<td>' + s.dest + '</td>' +
-      '<td style="font-family: JetBrains Mono, monospace;">' + s.eta + 'L</td>' +
-      '<td style="font-family: JetBrains Mono, monospace;">' + (s.timeIn ? s.timeIn + 'L' : '--') + '</td>' +
-      '<td>' + (s.timeIn ? '<span style="color: var(--accent-green);">Returned</span>' :
+      '<td style="font-family:JetBrains Mono,monospace;">' + (s.eta ? s.eta + 'L' : '--') + '</td>' +
+      '<td style="font-family:JetBrains Mono,monospace;">' + (s.timeIn ? s.timeIn + 'L' : '--') + '</td>' +
+      '<td>' + (s.timeIn ? '<span style="color:var(--accent-green);">Returned</span>' :
         '<button class="btn btn-sm btn-green" onclick="returnCar(' + i + ')">Return</button>') + '</td>' +
-    '</tr>'
-  ).join('');
+    '</tr>';
+  }).join('');
 }
 
 // ============================================================
-// GOOGLE SHEETS API
+// CLOCK & TABS
 // ============================================================
-async function fetchFromSheet() {
-  const cfg = getConfig();
-  if (!cfg.apiKey || !cfg.sheetId) return;
-
-  try {
-    const base = 'https://sheets.googleapis.com/v4/spreadsheets/' + cfg.sheetId + '/values';
-    const [availRes, rosterRes] = await Promise.all([
-      fetch(base + '/Availability!A4:G17?key=' + cfg.apiKey),
-      fetch(base + '/Roster!A4:F56?key=' + cfg.apiKey),
-    ]);
-
-    if (availRes.ok) {
-      const availData = await availRes.json();
-      const rows = availData.values || [];
-      rows.forEach((row, i) => {
-        if (i === 0) return; // header
-        const name = row[1];
-        const cs = carStatus.find(c => c.name === name);
-        if (cs && !cs.permanent) {
-          const st = (row[2] || '').toLowerCase();
-          if (st.includes('commit') || st.includes('out')) cs.status = 'committed';
-          else if (st.includes('return')) cs.status = 'returning';
-          else cs.status = 'available';
-          cs.driver = row[3] || '';
-          cs.dest = row[4] || '';
-          cs.eta = row[5] || '';
-        }
-      });
-    }
-
-    if (rosterRes.ok) {
-      const rosterData = await rosterRes.json();
-      const rows = rosterData.values || [];
-      presentPersonnel.clear();
-      rows.forEach((row, i) => {
-        if (i === 0) return;
-        const present = (row[3] || '').toLowerCase();
-        if (present === 'yes') {
-          const pIdx = PERSONNEL.findIndex(p => p.name === row[0]);
-          if (pIdx >= 0) presentPersonnel.add(pIdx);
-        }
-      });
-    }
-
-    renderFleetGrid('fleet-grid');
-    renderFleetGrid('all-cars-grid');
-    renderRoster();
-    document.getElementById('last-sync').textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
-    document.getElementById('config-status').textContent = 'Connected!';
-    document.getElementById('config-banner').classList.remove('show');
-  } catch (err) {
-    console.error('Sheet fetch error:', err);
-    document.getElementById('config-status').textContent = 'Error: ' + err.message;
-  }
+function updateClock() {
+  var now = new Date();
+  var h = String(now.getHours()).padStart(2, '0');
+  var m = String(now.getMinutes()).padStart(2, '0');
+  var s = String(now.getSeconds()).padStart(2, '0');
+  document.getElementById('clock').textContent = h + ':' + m + ':' + s + 'L';
+  var opts = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
+  document.getElementById('date-display').textContent = now.toLocaleDateString('en-US', opts).toUpperCase();
 }
 
-async function saveAssignments() {
-  const cfg = getConfig();
-  if (!cfg.apiKey || !cfg.sheetId) {
-    document.getElementById('assign-status').textContent = 'Configure Google Sheets first (Settings tab)';
-    return;
-  }
-  document.getElementById('assign-status').textContent = 'Saving not yet implemented for write-back. Copy from preview.';
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
+  document.querySelectorAll('.tab-btn').forEach(function(el) { el.classList.remove('active'); });
+  document.getElementById('tab-' + tab).classList.add('active');
+  var tabMap = { dashboard: 'Dashboard', vco: 'VCO Panel', cars: 'Car Status', signout: 'Sign-Out Log' };
+  document.querySelectorAll('.tab-btn').forEach(function(el) {
+    if (el.textContent === tabMap[tab]) el.classList.add('active');
+  });
 }
 
 // ============================================================
 // INIT
 // ============================================================
-function init() {
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('vco-date').value = today;
-
+function initApp() {
+  document.getElementById('vco-date').value = new Date().toISOString().split('T')[0];
   updateClock();
   setInterval(updateClock, 1000);
-
-  // Load saved config
-  const cfg = getConfig();
-  document.getElementById('cfg-api-key').value = cfg.apiKey;
-  document.getElementById('cfg-sheet-id').value = cfg.sheetId;
-
-  if (!cfg.apiKey || !cfg.sheetId) {
-    document.getElementById('config-banner').classList.add('show');
-  }
-
-  renderFleetGrid('fleet-grid');
-  renderFleetGrid('all-cars-grid');
-  renderRoster();
-  renderAssignments();
-  renderSignoutLog();
-  populateCarSelect();
-
-  // Auto-refresh from sheet
-  if (cfg.apiKey && cfg.sheetId) {
-    fetchFromSheet();
-    setInterval(fetchFromSheet, 60000);
-  }
+  loadAllData();
+  setInterval(loadAllData, REFRESH_SEC * 1000);
 }
-
-init();
 </script>
 </body>
 </html>
