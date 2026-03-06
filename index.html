@@ -438,8 +438,9 @@ function loadAllData() {
     fetchSheet('Roster!A4:F60'),
     fetchSheet('Availability!A4:G17'),
     fetchSheet('Availability!A20:G40'),
+    fetchSheet('Daily Schedule!B3'),
   ]).then(function(results) {
-    var configRows = results[0], rosterRows = results[1], availRows = results[2], signoutRows = results[3];
+    var configRows = results[0], rosterRows = results[1], availRows = results[2], signoutRows = results[3], schedRows = results[4];
 
     if (configRows[0] && configRows[0][1]) document.getElementById('tdy-location').textContent = configRows[0][1].toUpperCase();
 
@@ -486,6 +487,14 @@ function loadAllData() {
         if (!r || !r[0]) continue;
         signoutLog.push({ time:r[0], car:r[1]||'', driver:r[2]||'', dest:r[4]||'', eta:r[5]||'', timeIn:r[6]||'' });
       }
+    }
+
+    // Load saved assignments from Daily Schedule B3
+    if (schedRows.length && schedRows[0][0]) {
+      try {
+        var saved = JSON.parse(schedRows[0][0]);
+        if (Array.isArray(saved) && saved.length) currentAssignments = saved;
+      } catch(e) { /* no saved assignments */ }
     }
 
     dataLoaded = true;

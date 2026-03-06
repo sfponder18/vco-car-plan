@@ -96,6 +96,9 @@ function saveAssignments(ss, data) {
     }
   }
 
+  // Save raw JSON to B3 for dashboard to read back
+  sheet.getRange('B3').setValue(JSON.stringify(assignments));
+
   return respond({ success: true, saved: assignments.length });
 }
 
