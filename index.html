@@ -347,10 +347,12 @@ body::before {
           <button class="btn btn-primary btn-sm" onclick="addSignout()">Log Sign-Out</button>
           <span id="so-selected" style="font-size:12px;color:var(--gold);margin-left:12px;"></span>
         </div>
-        <table class="assign-table">
-          <thead><tr><th>Time Out</th><th>Car</th><th>Driver</th><th>Destination</th><th>ETA Back</th><th>Time In</th><th>Action</th></tr></thead>
-          <tbody id="signout-body"><tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:20px;">No sign-outs logged</td></tr></tbody>
-        </table>
+        <div style="overflow-x:auto;">
+          <table class="assign-table">
+            <thead><tr><th>Time Out</th><th>Car</th><th>Driver</th><th>Destination</th><th>ETA Back</th><th>Time In</th><th>Action</th></tr></thead>
+            <tbody id="signout-body"><tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:20px;">No sign-outs logged</td></tr></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
