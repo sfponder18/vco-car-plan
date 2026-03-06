@@ -227,6 +227,7 @@ body::before {
     <button class="tab-btn" onclick="switchTab('cars')">Fleet</button>
     <button class="tab-btn vco-only" onclick="switchTab('vco')" style="display:none;">VCO Panel</button>
     <button class="tab-btn" onclick="switchTab('signout')">Sign-Out</button>
+    <button class="tab-btn vco-only" onclick="switchTab('settings')" style="display:none;">Settings</button>
   </div>
 
   <!-- DASHBOARD (everyone) -->
@@ -278,6 +279,7 @@ body::before {
         </div>
         <div style="margin:16px 0;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
           <button class="btn btn-primary" onclick="autoAssign()">Auto-Assign</button>
+          <button class="btn btn-sm" style="background:var(--green);color:#000;font-weight:700;" onclick="pushAssignmentsToSheet()">Push to Sheet</button>
           <button class="btn btn-red btn-sm" onclick="clearAssignments()">Clear</button>
           <span id="assign-status" style="font-size:12px;color:var(--text-secondary);margin-left:8px;"></span>
         </div>
@@ -335,6 +337,24 @@ body::before {
     </div>
   </div>
 
+  <!-- SETTINGS (VCO only) -->
+  <div class="tab-content" id="tab-settings">
+    <div class="card">
+      <div class="card-header"><h2>Apps Script Connection</h2></div>
+      <div class="card-body">
+        <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">Paste your Google Apps Script Web App URL here. This lets the dashboard write assignments back to the sheet so all viewers can see them.</p>
+        <div class="vco-controls" style="grid-template-columns:1fr;">
+          <div class="control-group"><label>Web App URL</label><input type="text" id="cfg-webapp-url" placeholder="https://script.google.com/macros/s/.../exec"></div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:12px;align-items:center;">
+          <button class="btn btn-primary" onclick="saveWebAppUrl()">Save</button>
+          <button class="btn btn-red btn-sm" onclick="clearWebAppUrl()">Clear</button>
+          <span id="webapp-status" style="font-size:12px;color:var(--text-secondary);"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="footer">
     <div>VCO CAR PLAN v3.0 | 48 FW TDY OPS</div>
     <div class="refresh-indicator"><div class="refresh-dot"></div><span>Last sync: <span id="last-sync">--</span></span></div>
@@ -348,6 +368,7 @@ var API_KEY = 'AIzaSyA17MpRQVS5LAfOYAEkv28zY2uVzEoKHU4';
 var REFRESH_SEC = 60;
 var PASS_VIEWER = '5bf77be6';
 var PASS_VCO = '44fc7d9c';
+var WEBAPP_URL = localStorage.getItem('vco_webapp_url') || 'https://script.google.com/macros/s/AKfycbwOoXypQcpHD9HEe7NJVq7XCdCRv5fc2wzwT9OH3cxa8FuUjS0gWnw4G8CbfyXP51Q_Ww/exec';
 
 // STATE
 var isVCO = false;
@@ -825,6 +846,7 @@ function addSignout() {
   var cs=CARS.find(function(c){return c.name===car;});
   if(cs){cs.status='committed';cs.driver=driver;cs.dest=dest;cs.eta=eta;}
   renderFleetGrid('fleet-grid'); renderFleetGrid('all-cars-grid');
+  postToSheet({ action:'addSignout', time:time, car:car, driver:driver, passengers:'', destination:dest, eta:eta });
   ['so-time','so-driver','so-dest','so-eta'].forEach(function(id){document.getElementById(id).value='';});
 }
 
@@ -834,6 +856,7 @@ function returnCar(idx) {
   var cs=CARS.find(function(c){return c.name===e.car;});
   if(cs){cs.status='available';cs.driver='';cs.dest='';cs.eta='';}
   renderSignoutLog(); renderFleetGrid('fleet-grid'); renderFleetGrid('all-cars-grid');
+  postToSheet({ action:'returnCar', time:e.time, car:e.car, timeIn:e.timeIn });
 }
 
 function renderSignoutLog() {
@@ -842,6 +865,50 @@ function renderSignoutLog() {
   body.innerHTML=signoutLog.map(function(s,i){
     return '<tr><td style="font-family:JetBrains Mono,monospace;color:var(--gold);font-weight:600;">'+s.time+'L</td><td><strong>'+s.car+'</strong></td><td>'+s.driver+'</td><td>'+s.dest+'</td><td style="font-family:JetBrains Mono,monospace;">'+(s.eta?s.eta+'L':'--')+'</td><td style="font-family:JetBrains Mono,monospace;">'+(s.timeIn?s.timeIn+'L':'--')+'</td><td>'+(s.timeIn?'<span style="color:var(--green);">Returned</span>':'<button class="btn btn-sm btn-green" onclick="returnCar('+i+')">Return</button>')+'</td></tr>';
   }).join('');
+}
+
+// ============================================================
+// APPS SCRIPT WRITE-BACK
+// ============================================================
+function postToSheet(data) {
+  if (!WEBAPP_URL) { console.warn('No Web App URL configured'); return; }
+  fetch(WEBAPP_URL, {
+    method: 'POST', mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).then(function() {
+    console.log('Posted to sheet:', data.action);
+  }).catch(function(err) {
+    console.error('Sheet write error:', err);
+  });
+}
+
+function saveWebAppUrl() {
+  var url = document.getElementById('cfg-webapp-url').value.trim();
+  if (!url) return;
+  localStorage.setItem('vco_webapp_url', url);
+  WEBAPP_URL = url;
+  document.getElementById('webapp-status').textContent = 'Saved!';
+  document.getElementById('webapp-status').style.color = 'var(--green)';
+}
+
+function clearWebAppUrl() {
+  localStorage.removeItem('vco_webapp_url');
+  WEBAPP_URL = '';
+  document.getElementById('cfg-webapp-url').value = '';
+  document.getElementById('webapp-status').textContent = 'Cleared.';
+  document.getElementById('webapp-status').style.color = 'var(--text-secondary)';
+}
+
+function pushAssignmentsToSheet() {
+  if (!currentAssignments.length) return;
+  var date = document.getElementById('vco-date').value || '';
+  postToSheet({
+    action: 'saveAssignments',
+    date: date,
+    assignments: currentAssignments
+  });
+  document.getElementById('assign-status').textContent = 'Pushed to sheet!';
 }
 
 // ============================================================
@@ -857,12 +924,13 @@ function switchTab(tab) {
   document.querySelectorAll('.tab-content').forEach(function(el){el.classList.remove('active');});
   document.querySelectorAll('.tab-btn').forEach(function(el){el.classList.remove('active');});
   document.getElementById('tab-'+tab).classList.add('active');
-  var map={dashboard:'Dashboard',vco:'VCO Panel',cars:'Fleet',signout:'Sign-Out'};
+  var map={dashboard:'Dashboard',vco:'VCO Panel',cars:'Fleet',signout:'Sign-Out',settings:'Settings'};
   document.querySelectorAll('.tab-btn').forEach(function(el){if(el.textContent===map[tab])el.classList.add('active');});
 }
 
 function initApp() {
   document.getElementById('vco-date').value = new Date().toISOString().split('T')[0];
+  if (WEBAPP_URL) document.getElementById('cfg-webapp-url').value = WEBAPP_URL;
   updateClock(); setInterval(updateClock, 1000);
   loadAllData(); setInterval(loadAllData, REFRESH_SEC * 1000);
 }
