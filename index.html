@@ -880,6 +880,7 @@ function renderEditor() {
     return '<div class="assign-car-box" onclick="moveSelectedTo('+idx+')">'+
       '<div class="car-header"><span class="car-name">'+a.car+'</span><span class="car-count">'+(1+a.passengers.length)+'/5</span></div>'+
       '<div class="dep-time"><label>Depart:</label><input type="text" value="'+a.departTime+'" onchange="setDepartTime('+idx+',this.value)" onclick="event.stopPropagation()"></div>'+
+      '<div class="dep-time"><label>Dest:</label><input type="text" value="'+a.destination+'" onchange="setDestination('+idx+',this.value)" onclick="event.stopPropagation()"></div>'+
       '<div>'+paxHtml+'</div>'+
     '</div>';
   }).join('');
@@ -948,6 +949,14 @@ function moveSelectedTo(targetIdx) {
 function setDepartTime(idx, val) {
   if (idx >= 0 && idx < currentAssignments.length) {
     currentAssignments[idx].departTime = val;
+    renderAssignments();
+    pushAssignmentsToSheet();
+  }
+}
+
+function setDestination(idx, val) {
+  if (idx >= 0 && idx < currentAssignments.length) {
+    currentAssignments[idx].destination = val;
     renderAssignments();
     pushAssignmentsToSheet();
   }
