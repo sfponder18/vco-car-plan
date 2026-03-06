@@ -386,10 +386,12 @@ var API_KEY = 'AIzaSyA17MpRQVS5LAfOYAEkv28zY2uVzEoKHU4';
 var REFRESH_SEC = 60;
 var PASS_VIEWER = '5bf77be6';
 var PASS_VCO = '44fc7d9c';
+var PASS_PILOT = 'f781b272';
 var WEBAPP_URL = localStorage.getItem('vco_webapp_url') || 'https://script.google.com/macros/s/AKfycbwOoXypQcpHD9HEe7NJVq7XCdCRv5fc2wzwT9OH3cxa8FuUjS0gWnw4G8CbfyXP51Q_Ww/exec';
 
 // STATE
 var isVCO = false;
+var isPilot = false;
 var CARS = [];
 var PERSONNEL = [];
 var presentPersonnel = new Set();
@@ -399,6 +401,25 @@ var dataLoaded = false;
 var rosterEditedLocally = false;
 var selectedPerson = null; // name of person being moved
 var fleetShowAll = false;
+
+// ============================================================
+// PILOT VIEW HELPERS
+// ============================================================
+function carDisplayName(car) {
+  if (isPilot && car.pilotName) return car.pilotName;
+  return car.name;
+}
+function carDisplayNameByName(name) {
+  var car = CARS.find(function(c){return c.name===name;});
+  if (car && isPilot && car.pilotName) return car.pilotName;
+  return name;
+}
+function personDisplayName(name) {
+  if (!isPilot) return name;
+  var p = PERSONNEL.find(function(p){return p.name===name;});
+  if (p && p.callsign) return p.callsign;
+  return name;
+}
 
 // ============================================================
 // PASSWORD
@@ -415,6 +436,10 @@ function tryUnlock() {
   if (hash === PASS_VCO) {
     isVCO = true;
     sessionStorage.setItem('vco_auth', 'vco');
+    unlock();
+  } else if (hash === PASS_PILOT) {
+    isPilot = true;
+    sessionStorage.setItem('vco_auth', 'pilot');
     unlock();
   } else if (hash === PASS_VIEWER) {
     isVCO = false;
@@ -440,6 +465,7 @@ document.getElementById('lock-input').addEventListener('keydown', function(e) { 
 
 var savedAuth = sessionStorage.getItem('vco_auth');
 if (savedAuth === 'vco') { isVCO = true; unlock(); }
+else if (savedAuth === 'pilot') { isPilot = true; unlock(); }
 else if (savedAuth === 'viewer') { isVCO = false; unlock(); }
 
 // ============================================================
@@ -453,8 +479,8 @@ function fetchSheet(range) {
 
 function loadAllData() {
   return Promise.all([
-    fetchSheet('Config!A3:H23'),
-    fetchSheet('Roster!A4:F60'),
+    fetchSheet('Config!A3:J23'),
+    fetchSheet('Roster!A4:G60'),
     fetchSheet('Availability!A4:G17'),
     fetchSheet('Availability!A20:G40'),
     fetchSheet('Daily Schedule!B3'),
@@ -469,7 +495,7 @@ function loadAllData() {
       if (!r || !r[0] || !r[0].match(/^Car \d/)) continue;
       var plate = r[2]||'';
       var isElectric = plate.toUpperCase().startsWith('E');
-      CARS.push({ num: parseInt(r[0].replace('Car ','')), name: r[1]||'', plate: plate, electric: isElectric, capacity: parseInt(r[4])||5, permanent: !!(r[5]), assignedTo: r[5]||'', status: (r[6]||'').toLowerCase().includes('permanent') ? 'permanent' : 'available', driver:'', dest:'', eta:'' });
+      CARS.push({ num: parseInt(r[0].replace('Car ','')), name: r[1]||'', pilotName: r[8]||'', icon: r[9]||'', plate: plate, electric: isElectric, capacity: parseInt(r[4])||5, permanent: !!(r[5]), assignedTo: r[5]||'', status: (r[6]||'').toLowerCase().includes('permanent') ? 'permanent' : 'available', driver:'', dest:'', eta:'' });
     }
 
     // Availability tab status is only used for sign-out log driven statuses
@@ -483,7 +509,7 @@ function loadAllData() {
         var r = rosterRows[i];
         if (!r || !r[0]) continue;
         var idx = PERSONNEL.length;
-        PERSONNEL.push({ name: r[0], section: r[1]||'', hotel: r[2]||'', fueler: (r[5]||'').toLowerCase()==='yes' });
+        PERSONNEL.push({ name: r[0], section: r[1]||'', hotel: r[2]||'', fueler: (r[5]||'').toLowerCase()==='yes', callsign: r[6]||'' });
         if ((r[3]||'').toLowerCase() === 'yes') sheetPresent.add(idx);
       }
     }
@@ -557,9 +583,12 @@ function renderFleetGrid(id) {
   }
 
   el.innerHTML = carsToShow.map(function(car) {
+    var dn = carDisplayName(car);
     var ev = car.electric ? ' <span class="electric">EV</span>' : '';
     var sl = car.permanent ? 'PERMANENT' : car.status==='available' ? 'AVAILABLE' : car.status==='committed' ? 'COMMITTED' : 'RETURNING';
-    return '<div class="car-card '+car.status+'"><div class="car-card-name">'+car.name+'</div><div class="car-card-plate">'+car.plate+ev+'</div><div class="car-status-badge">'+sl+'</div>'+(car.driver||car.assignedTo?'<div class="car-card-detail"><strong>'+(car.driver||car.assignedTo)+'</strong>'+(car.dest?'<br>'+car.dest:'')+(car.eta?'<br>ETA: '+car.eta:'')+'</div>':'')+'</div>';
+    var iconHtml = (isPilot && car.icon) ? '<img src="'+car.icon+'" alt="" style="width:48px;height:48px;object-fit:contain;margin:4px auto;display:block;">' : '';
+    var driverDisplay = car.driver ? personDisplayName(car.driver) : car.assignedTo;
+    return '<div class="car-card '+car.status+'">'+iconHtml+'<div class="car-card-name">'+dn+'</div><div class="car-card-plate">'+car.plate+ev+'</div><div class="car-status-badge">'+sl+'</div>'+(driverDisplay?'<div class="car-card-detail"><strong>'+driverDisplay+'</strong>'+(car.dest?'<br>'+car.dest:'')+(car.eta?'<br>ETA: '+car.eta:'')+'</div>':'')+'</div>';
   }).join('');
 }
 
@@ -788,10 +817,13 @@ function renderAssignments() {
   body.innerHTML = currentAssignments.map(function(a) {
     var hc = a.hotel==='Flexbase'?'flexbase':a.hotel==='Kysthotell'?'kysthotell':'fosen';
     var ev = a.electric ? ' <span style="color:var(--green);font-size:10px;">EV</span>' : '';
+    var carDN = carDisplayNameByName(a.car);
+    var driverDN = personDisplayName(a.driver);
+    var paxDN = a.passengers.map(function(n){return personDisplayName(n);});
     return '<tr>'+
-      '<td><strong>'+a.car+'</strong>'+ev+'<br><span style="color:var(--text-dim);font-size:11px;">'+a.plate+'</span></td>'+
-      '<td><span class="driver-name">'+a.driver+'</span>'+(a.driverFueler?' <span style="color:var(--green);font-size:10px;">F</span>':'')+'</td>'+
-      '<td class="pax-list">'+(a.passengers.length?a.passengers.join('<br>'):'<em style="color:var(--text-dim);">--</em>')+'</td>'+
+      '<td><strong>'+carDN+'</strong>'+ev+'<br><span style="color:var(--text-dim);font-size:11px;">'+a.plate+'</span></td>'+
+      '<td><span class="driver-name">'+driverDN+'</span>'+(a.driverFueler?' <span style="color:var(--green);font-size:10px;">F</span>':'')+'</td>'+
+      '<td class="pax-list">'+(paxDN.length?paxDN.join('<br>'):'<em style="color:var(--text-dim);">--</em>')+'</td>'+
       '<td><span class="hotel-badge '+hc+'">'+a.hotel+'</span></td>'+
       '<td style="font-weight:700;color:var(--gold-light);font-size:14px;">'+a.destination+'</td>'+
       '<td style="font-family:JetBrains Mono,monospace;font-weight:600;color:var(--gold-light);"><input type="text" value="'+a.departTime+'" onchange="setDepartTime('+currentAssignments.indexOf(a)+',this.value)" style="width:60px;background:var(--bg-primary);border:1px solid var(--border);border-radius:4px;color:var(--gold-light);font-family:JetBrains Mono,monospace;font-weight:600;font-size:inherit;padding:2px 4px;text-align:center;">L</td>'+
@@ -957,7 +989,8 @@ function filterSignoutCars() {
   grid.innerHTML = available.length ? available.map(function(c) {
     var sel = selectedSignoutCar === c.name ? 'background:var(--gold);color:#000;' : 'background:var(--bg-card);color:var(--text-primary);';
     var ev = c.electric ? ' <span style="color:var(--green);font-size:10px;">EV</span>' : '';
-    return '<div onclick="selectSignoutCar(\''+c.name+'\')" style="'+sel+'border:1px solid var(--border);border-radius:6px;padding:8px 14px;cursor:pointer;font-family:JetBrains Mono,monospace;font-size:13px;font-weight:600;"><strong>'+c.name+'</strong>'+ev+'<br><span style="font-size:10px;color:var(--text-dim);">'+c.plate+'</span></div>';
+    var cdn = carDisplayName(c);
+    return '<div onclick="selectSignoutCar(\''+c.name+'\')" style="'+sel+'border:1px solid var(--border);border-radius:6px;padding:8px 14px;cursor:pointer;font-family:JetBrains Mono,monospace;font-size:13px;font-weight:600;"><strong>'+cdn+'</strong>'+ev+'<br><span style="font-size:10px;color:var(--text-dim);">'+c.plate+'</span></div>';
   }).join('') : '<span style="color:var(--red);font-size:13px;">No cars available for this time window</span>';
 }
 
@@ -1026,8 +1059,8 @@ function renderCarsOut() {
       status = '<span style="color:var(--gold);font-weight:600;">Out</span>';
     }
     return '<tr>'+
-      '<td><strong>'+s.car+'</strong></td>'+
-      '<td>'+s.driver+'</td>'+
+      '<td><strong>'+carDisplayNameByName(s.car)+'</strong></td>'+
+      '<td>'+personDisplayName(s.driver)+'</td>'+
       '<td>'+s.dest+'</td>'+
       '<td style="font-family:JetBrains Mono,monospace;color:var(--gold);font-weight:600;">'+s.time+'L</td>'+
       '<td style="font-family:JetBrains Mono,monospace;">'+(s.eta?s.eta+'L':'--')+'</td>'+
@@ -1047,7 +1080,7 @@ function renderSignoutLog() {
       actions = '<button class="btn btn-sm btn-green" onclick="returnCar('+i+')">Return</button> ';
     }
     actions += '<button class="btn btn-sm btn-red" onclick="deleteSignout('+i+')" style="font-size:10px;padding:2px 6px;">X</button>';
-    return '<tr><td style="font-family:JetBrains Mono,monospace;color:var(--gold);font-weight:600;">'+s.time+'L</td><td><strong>'+s.car+'</strong></td><td>'+s.driver+'</td><td>'+s.dest+'</td><td style="font-family:JetBrains Mono,monospace;">'+(s.eta?s.eta+'L':'--')+'</td><td style="font-family:JetBrains Mono,monospace;">'+(s.timeIn?s.timeIn+'L':'--')+'</td><td>'+actions+'</td></tr>';
+    return '<tr><td style="font-family:JetBrains Mono,monospace;color:var(--gold);font-weight:600;">'+s.time+'L</td><td><strong>'+carDisplayNameByName(s.car)+'</strong></td><td>'+personDisplayName(s.driver)+'</td><td>'+s.dest+'</td><td style="font-family:JetBrains Mono,monospace;">'+(s.eta?s.eta+'L':'--')+'</td><td style="font-family:JetBrains Mono,monospace;">'+(s.timeIn?s.timeIn+'L':'--')+'</td><td>'+actions+'</td></tr>';
   }).join('');
 }
 
