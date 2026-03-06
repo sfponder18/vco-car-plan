@@ -426,7 +426,9 @@ function loadAllData() {
     for (var i = 7; i < configRows.length; i++) {
       var r = configRows[i];
       if (!r || !r[0] || !r[0].startsWith('Car')) continue;
-      CARS.push({ num: parseInt(r[0].replace('Car ','')), name: r[1]||'', plate: r[2]||'', electric: (r[3]||'').toLowerCase()==='yes', capacity: parseInt(r[4])||5, permanent: !!(r[5]), assignedTo: r[5]||'', status: (r[6]||'').toLowerCase().includes('permanent') ? 'permanent' : 'available', driver:'', dest:'', eta:'' });
+      var plate = r[2]||'';
+      var isElectric = plate.toUpperCase().startsWith('E');
+      CARS.push({ num: parseInt(r[0].replace('Car ','')), name: r[1]||'', plate: plate, electric: isElectric, capacity: parseInt(r[4])||5, permanent: !!(r[5]), assignedTo: r[5]||'', status: (r[6]||'').toLowerCase().includes('permanent') ? 'permanent' : 'available', driver:'', dest:'', eta:'' });
     }
 
     if (availRows.length > 1) {
@@ -623,8 +625,12 @@ function autoAssign() {
 
     [pilots, support].forEach(function(group) {
       if (!group.length) return;
-      var carsNeeded = Math.ceil(group.length / 5);
-      if (carIdx + carsNeeded > availCars.length) carsNeeded = availCars.length - carIdx;
+      // Prefer 4 per car; only use 5 if we'd run out of cars
+      var carsAt4 = Math.ceil(group.length / 4);
+      var carsAt5 = Math.ceil(group.length / 5);
+      var carsRemaining = availCars.length - carIdx;
+      var carsNeeded = carsAt4 <= carsRemaining ? carsAt4 : carsAt5;
+      if (carsNeeded > carsRemaining) carsNeeded = carsRemaining;
       if (carsNeeded <= 0) return;
 
       // Even spread: distribute people across carsNeeded cars
@@ -710,7 +716,7 @@ function renderAssignments() {
       '<td><span class="driver-name">'+a.driver+'</span>'+(a.driverFueler?' <span style="color:var(--green);font-size:10px;">F</span>':'')+'</td>'+
       '<td class="pax-list">'+(a.passengers.length?a.passengers.join('<br>'):'<em style="color:var(--text-dim);">--</em>')+'</td>'+
       '<td><span class="hotel-badge '+hc+'">'+a.hotel+'</span></td>'+
-      '<td>'+a.destination+'</td>'+
+      '<td style="font-weight:700;color:var(--gold-light);font-size:14px;">'+a.destination+'</td>'+
       '<td style="font-family:JetBrains Mono,monospace;font-weight:600;color:var(--gold-light);">'+a.departTime+'L</td>'+
     '</tr>';
   }).join('');
