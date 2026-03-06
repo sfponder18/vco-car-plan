@@ -480,12 +480,13 @@ function fetchSheet(range) {
 function loadAllData() {
   return Promise.all([
     fetchSheet('Config!A3:J23'),
-    fetchSheet('Roster!A4:G60'),
+    fetchSheet('Roster!A4:F60'),
+    fetchSheet('Config!B27:C52'),
     fetchSheet('Availability!A4:G17'),
     fetchSheet('Availability!A20:G40'),
     fetchSheet('Daily Schedule!B3'),
   ]).then(function(results) {
-    var configRows = results[0], rosterRows = results[1], availRows = results[2], signoutRows = results[3], schedRows = results[4];
+    var configRows = results[0], rosterRows = results[1], callsignRows = results[2], availRows = results[3], signoutRows = results[4], schedRows = results[5];
 
     if (configRows[0] && configRows[0][1]) document.getElementById('tdy-location').textContent = configRows[0][1].toUpperCase();
 
@@ -509,11 +510,18 @@ function loadAllData() {
         var r = rosterRows[i];
         if (!r || !r[0]) continue;
         var idx = PERSONNEL.length;
-        PERSONNEL.push({ name: r[0], section: r[1]||'', hotel: r[2]||'', fueler: (r[5]||'').toLowerCase()==='yes', callsign: r[6]||'' });
+        PERSONNEL.push({ name: r[0], section: r[1]||'', hotel: r[2]||'', fueler: (r[5]||'').toLowerCase()==='yes', callsign: '' });
         if ((r[3]||'').toLowerCase() === 'yes') sheetPresent.add(idx);
       }
     }
     if (!hadLocalEdits) presentPersonnel = sheetPresent;
+
+    // Map callsigns from Config B27:C52
+    callsignRows.forEach(function(r) {
+      if (!r || !r[0]) return;
+      var p = PERSONNEL.find(function(p){return p.name === r[0];});
+      if (p && r[1]) p.callsign = r[1];
+    });
 
     signoutLog = [];
     if (signoutRows.length > 1) {
