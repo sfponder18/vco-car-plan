@@ -234,22 +234,13 @@ body::before {
   <div class="tab-content active" id="tab-dashboard">
     <div class="card">
       <div class="card-header">
-        <h2>Fleet Status</h2>
-        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-secondary);"><span id="cars-avail-count">0</span> / <span id="cars-assignable-count">0</span> available</span>
-      </div>
-      <div class="card-body">
-        <div class="car-grid" id="fleet-grid"><div class="loading"><div class="spinner"></div><br>Loading fleet...</div></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-header">
         <h2>Morning Push</h2>
         <span id="show-time-display" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold-light);">--</span>
       </div>
       <div class="card-body" style="padding:0;overflow-x:auto;">
         <table class="assign-table">
           <thead><tr><th>Car</th><th>Driver</th><th>Passengers</th><th>Hotel</th><th>Destination</th><th>Depart</th><th>ETA Return</th></tr></thead>
-          <tbody id="assignment-body"><tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:40px;">No assignments yet.</td></tr></tbody>
+          <tbody id="assignment-body"><tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:40px;">No assignments yet.</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -263,6 +254,15 @@ body::before {
           <thead><tr><th>Car</th><th>Driver</th><th>Destination</th><th>Time Out</th><th>ETA Back</th><th>Status</th></tr></thead>
           <tbody id="cars-out-body"><tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:20px;">No cars currently out</td></tr></tbody>
         </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <h2>Fleet Status</h2>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-secondary);"><span id="cars-avail-count">0</span> / <span id="cars-assignable-count">0</span> available</span>
+      </div>
+      <div class="card-body">
+        <div class="car-grid" id="fleet-grid"><div class="loading"><div class="spinner"></div><br>Loading fleet...</div></div>
       </div>
     </div>
   </div>
