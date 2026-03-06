@@ -7,562 +7,191 @@
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg-primary: #0a0e1a;
-  --bg-card: #111827;
-  --bg-card-hover: #1a2332;
-  --border: #1e2d4a;
-  --border-bright: #2a4a7a;
-  --text-primary: #e2e8f0;
-  --text-secondary: #8899b4;
-  --text-dim: #4a5a74;
-  --accent-blue: #3b82f6;
-  --accent-green: #10b981;
-  --accent-amber: #f59e0b;
-  --accent-red: #ef4444;
-  --accent-cyan: #06b6d4;
-  --accent-purple: #8b5cf6;
+  --bg-primary: #0a0a0a;
+  --bg-card: #141414;
+  --bg-card-hover: #1c1c1c;
+  --border: #2a2a2a;
+  --border-bright: #3a3a3a;
+  --text-primary: #f0f0f0;
+  --text-secondary: #999;
+  --text-dim: #555;
+  --gold: #d4a017;
+  --gold-light: #f0c850;
+  --gold-dim: rgba(212, 160, 23, 0.15);
+  --green: #10b981;
+  --red: #ef4444;
+  --amber: #f59e0b;
+  --purple: #8b5cf6;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
-
-body {
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-family: 'Inter', sans-serif;
-  min-height: 100vh;
-}
+body { background: var(--bg-primary); color: var(--text-primary); font-family: 'Inter', sans-serif; min-height: 100vh; }
 
 body::before {
-  content: '';
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-image:
-    linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
-  pointer-events: none;
-  z-index: 0;
+  content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background-image: linear-gradient(rgba(212,160,23,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(212,160,23,0.02) 1px, transparent 1px);
+  background-size: 40px 40px; pointer-events: none; z-index: 0;
 }
 
-/* PASSWORD SCREEN */
-.lock-screen {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  background: var(--bg-primary);
-}
+/* LOCK SCREEN */
+.lock-screen { position: fixed; top:0;left:0;right:0;bottom:0; display:flex; align-items:center; justify-content:center; z-index:1000; background: var(--bg-primary); }
+.lock-box { background: var(--bg-card); border: 1px solid var(--gold); border-radius: 12px; padding: 40px; text-align: center; width: 360px; }
+.lock-box .badge { display: inline-block; background: linear-gradient(135deg, var(--gold), #b8860b); padding: 8px 20px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 18px; letter-spacing: 3px; margin-bottom: 24px; color: #000; }
+.lock-box h2 { font-size: 16px; font-weight: 600; margin-bottom: 20px; color: var(--text-secondary); }
+.lock-box input { width:100%; padding:12px 16px; background:var(--bg-primary); border:1px solid var(--border); border-radius:6px; color:var(--text-primary); font-family:'JetBrains Mono',monospace; font-size:16px; text-align:center; letter-spacing:4px; margin-bottom:16px; }
+.lock-box input:focus { outline:none; border-color:var(--gold); }
+.lock-box .error { color:var(--red); font-size:13px; margin-bottom:12px; display:none; }
+.lock-box button { width:100%; padding:12px; background:linear-gradient(135deg, var(--gold), #b8860b); border:none; border-radius:6px; color:#000; font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:700; letter-spacing:2px; text-transform:uppercase; cursor:pointer; }
+.lock-box button:hover { filter:brightness(1.1); }
 
-.lock-box {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 40px;
-  text-align: center;
-  width: 360px;
-}
-
-.lock-box .badge {
-  display: inline-block;
-  background: linear-gradient(135deg, var(--accent-blue), #1d4ed8);
-  padding: 8px 20px;
-  border-radius: 6px;
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 700;
-  font-size: 18px;
-  letter-spacing: 3px;
-  margin-bottom: 24px;
-}
-
-.lock-box h2 {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 20px;
-  color: var(--text-secondary);
-}
-
-.lock-box input {
-  width: 100%;
-  padding: 12px 16px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  color: var(--text-primary);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 16px;
-  text-align: center;
-  letter-spacing: 4px;
-  margin-bottom: 16px;
-}
-
-.lock-box input:focus { outline: none; border-color: var(--accent-blue); }
-
-.lock-box .error {
-  color: var(--accent-red);
-  font-size: 13px;
-  margin-bottom: 12px;
-  display: none;
-}
-
-.lock-box button {
-  width: 100%;
-  padding: 12px;
-  background: linear-gradient(135deg, var(--accent-blue), #1d4ed8);
-  border: none;
-  border-radius: 6px;
-  color: white;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-
-.lock-box button:hover { filter: brightness(1.1); }
-
-/* MAIN APP - hidden until auth */
-.app {
-  position: relative;
-  z-index: 1;
-  padding: 16px 24px;
-  display: none;
-}
-
-.app.unlocked { display: block; }
+.app { position:relative; z-index:1; padding:16px 24px; display:none; }
+.app.unlocked { display:block; }
 
 /* HEADER */
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 0 14px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 16px;
-}
+.header { display:flex; justify-content:space-between; align-items:center; padding:10px 0 14px; border-bottom:1px solid var(--border); margin-bottom:16px; }
+.header-left { display:flex; align-items:center; gap:16px; }
+.header-badge { background:linear-gradient(135deg, var(--gold), #b8860b); padding:6px 14px; border-radius:4px; font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px; letter-spacing:2px; text-transform:uppercase; color:#000; }
+.header-title { font-size:22px; font-weight:900; letter-spacing:1px; text-transform:uppercase; }
+.header-title span { color:var(--gold); }
+.header-right { display:flex; align-items:center; gap:24px; font-family:'JetBrains Mono',monospace; }
+.header-clock { font-size:28px; font-weight:700; color:var(--gold-light); letter-spacing:2px; text-shadow:0 0 20px rgba(212,160,23,0.3); }
+.header-date { color:var(--text-secondary); font-size:13px; letter-spacing:1px; }
+.header-location { color:var(--text-secondary); font-size:13px; letter-spacing:1px; }
 
-.header-left { display: flex; align-items: center; gap: 16px; }
-
-.header-badge {
-  background: linear-gradient(135deg, var(--accent-blue), #1d4ed8);
-  padding: 6px 14px;
-  border-radius: 4px;
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-}
-
-.header-title {
-  font-size: 22px;
-  font-weight: 900;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
-
-.header-title span { color: var(--accent-blue); }
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  font-family: 'JetBrains Mono', monospace;
-}
-
-.header-clock {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--accent-cyan);
-  letter-spacing: 2px;
-  text-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
-}
-
-.header-date {
-  color: var(--text-secondary);
-  font-size: 13px;
-  letter-spacing: 1px;
-}
-
-.header-location {
-  color: var(--text-secondary);
-  font-size: 13px;
-  letter-spacing: 1px;
-}
-
-/* LOADING */
-.loading {
-  text-align: center;
-  padding: 60px;
-  color: var(--text-dim);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 14px;
-}
-
-.loading .spinner {
-  display: inline-block;
-  width: 24px; height: 24px;
-  border: 3px solid var(--border);
-  border-top-color: var(--accent-blue);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin-bottom: 12px;
-}
-
-@keyframes spin { to { transform: rotate(360deg); } }
+.loading { text-align:center; padding:60px; color:var(--text-dim); font-family:'JetBrains Mono',monospace; font-size:14px; }
+.loading .spinner { display:inline-block; width:24px; height:24px; border:3px solid var(--border); border-top-color:var(--gold); border-radius:50%; animation:spin 0.8s linear infinite; margin-bottom:12px; }
+@keyframes spin { to { transform:rotate(360deg); } }
 
 /* TABS */
-.tab-bar {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 16px;
-}
-
-.tab-btn {
-  padding: 8px 20px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 6px 6px 0 0;
-  color: var(--text-secondary);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.tab-btn:hover { color: var(--text-primary); border-color: var(--border-bright); }
-.tab-btn.active {
-  background: var(--accent-blue);
-  color: white;
-  border-color: var(--accent-blue);
-}
-
-.tab-content { display: none; }
-.tab-content.active { display: block; }
+.tab-bar { display:flex; gap:4px; margin-bottom:16px; }
+.tab-btn { padding:8px 20px; background:var(--bg-card); border:1px solid var(--border); border-radius:6px 6px 0 0; color:var(--text-secondary); font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; letter-spacing:1px; text-transform:uppercase; cursor:pointer; transition:all 0.2s; }
+.tab-btn:hover { color:var(--text-primary); border-color:var(--border-bright); }
+.tab-btn.active { background:var(--gold); color:#000; border-color:var(--gold); }
+.tab-content { display:none; }
+.tab-content.active { display:block; }
 
 /* CARDS */
-.card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 16px;
-}
-
-.card-header {
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.card-header h2 {
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
-
-.card-body { padding: 16px; }
+.card { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; overflow:hidden; margin-bottom:16px; }
+.card-header { padding:10px 16px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+.card-header h2 { font-size:14px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--gold); }
+.card-body { padding:16px; }
 
 /* CAR GRID */
-.car-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 12px;
-}
-
-.car-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 12px 14px;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s ease;
-}
-
-.car-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-}
-
-.car-card.available::before { background: var(--accent-green); }
-.car-card.available { border-color: rgba(16, 185, 129, 0.3); }
-.car-card.committed::before { background: var(--accent-red); }
-.car-card.committed { border-color: rgba(239, 68, 68, 0.3); }
-.car-card.returning::before { background: var(--accent-amber); }
-.car-card.returning { border-color: rgba(245, 158, 11, 0.3); }
-.car-card.permanent::before { background: var(--accent-purple); }
-.car-card.permanent { border-color: rgba(139, 92, 246, 0.3); }
-
-.car-card-name {
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 700;
-  font-size: 16px;
-  margin-bottom: 2px;
-}
-
-.car-card-plate {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  color: var(--text-dim);
-  margin-bottom: 6px;
-}
-
-.car-card-plate .electric { color: var(--accent-green); font-weight: 600; }
-
-.car-status-badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 3px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
-
-.car-card.available .car-status-badge { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
-.car-card.committed .car-status-badge { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); }
-.car-card.returning .car-status-badge { background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); }
-.car-card.permanent .car-status-badge { background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); }
-
-.car-card-detail {
-  margin-top: 8px;
-  font-size: 12px;
-  color: var(--text-secondary);
-  line-height: 1.5;
-}
-
-.car-card-detail strong { color: var(--text-primary); }
+.car-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:12px; }
+.car-card { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:12px 14px; position:relative; overflow:hidden; transition:all 0.3s ease; }
+.car-card::before { content:''; position:absolute; top:0;left:0;right:0; height:3px; }
+.car-card.available::before { background:var(--green); }
+.car-card.available { border-color:rgba(16,185,129,0.3); }
+.car-card.committed::before { background:var(--red); }
+.car-card.committed { border-color:rgba(239,68,68,0.3); }
+.car-card.returning::before { background:var(--amber); }
+.car-card.returning { border-color:rgba(245,158,11,0.3); }
+.car-card.permanent::before { background:var(--gold); }
+.car-card.permanent { border-color:rgba(212,160,23,0.3); }
+.car-card-name { font-family:'JetBrains Mono',monospace; font-weight:700; font-size:16px; margin-bottom:2px; color:var(--gold-light); }
+.car-card-plate { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-dim); margin-bottom:6px; }
+.car-card-plate .electric { color:var(--green); font-weight:600; }
+.car-status-badge { display:inline-block; padding:2px 8px; border-radius:3px; font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase; }
+.car-card.available .car-status-badge { background:rgba(16,185,129,0.15); color:var(--green); }
+.car-card.committed .car-status-badge { background:rgba(239,68,68,0.15); color:var(--red); }
+.car-card.returning .car-status-badge { background:rgba(245,158,11,0.15); color:var(--amber); }
+.car-card.permanent .car-status-badge { background:var(--gold-dim); color:var(--gold); }
+.car-card-detail { margin-top:8px; font-size:12px; color:var(--text-secondary); line-height:1.5; }
+.car-card-detail strong { color:var(--text-primary); }
 
 /* TABLES */
-.assign-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
+.assign-table { width:100%; border-collapse:collapse; font-size:13px; }
+.assign-table th { background:rgba(212,160,23,0.08); padding:8px 10px; font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--gold); border-bottom:1px solid var(--border); text-align:left; position:sticky; top:0; z-index:2; }
+.assign-table td { padding:8px 10px; border-bottom:1px solid rgba(42,42,42,0.5); vertical-align:top; }
+.assign-table tr:hover { background:var(--bg-card-hover); }
 
-.assign-table th {
-  background: rgba(30, 45, 74, 0.5);
-  padding: 8px 10px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  border-bottom: 1px solid var(--border);
-  text-align: left;
-  position: sticky;
-  top: 0;
-  z-index: 2;
-}
+.hotel-badge { display:inline-block; padding:1px 8px; border-radius:3px; font-size:11px; font-weight:600; }
+.hotel-badge.flexbase { background:rgba(212,160,23,0.15); color:var(--gold); }
+.hotel-badge.kysthotell { background:rgba(16,185,129,0.15); color:var(--green); }
+.hotel-badge.fosen { background:rgba(239,68,68,0.15); color:var(--red); }
 
-.assign-table td {
-  padding: 8px 10px;
-  border-bottom: 1px solid rgba(30, 45, 74, 0.3);
-  vertical-align: top;
-}
+.driver-name { color:var(--gold-light); font-weight:600; }
+.pax-list { color:var(--text-secondary); font-size:12px; }
 
-.assign-table tr:hover { background: var(--bg-card-hover); }
-
-.hotel-badge {
-  display: inline-block;
-  padding: 1px 8px;
-  border-radius: 3px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.hotel-badge.flexbase { background: rgba(255, 255, 0, 0.15); color: #fbbf24; }
-.hotel-badge.kysthotell { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
-.hotel-badge.fosen { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); }
-
-.driver-name { color: var(--accent-cyan); font-weight: 600; }
-.pax-list { color: var(--text-secondary); font-size: 12px; }
+/* BUTTONS */
+.btn { padding:10px 24px; border:none; border-radius:6px; font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; letter-spacing:1px; text-transform:uppercase; cursor:pointer; transition:all 0.2s; }
+.btn-primary { background:linear-gradient(135deg, var(--gold), #b8860b); color:#000; }
+.btn-primary:hover { filter:brightness(1.1); }
+.btn-green { background:linear-gradient(135deg, var(--green), #059669); color:#fff; }
+.btn-red { background:linear-gradient(135deg, var(--red), #dc2626); color:#fff; }
+.btn-sm { padding:6px 14px; font-size:11px; }
 
 /* VCO CONTROLS */
-.vco-controls {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.control-group label {
-  display: block;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  margin-bottom: 4px;
-}
-
-.control-group input, .control-group select {
-  width: 100%;
-  padding: 8px 12px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  color: var(--text-primary);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-}
-
-.control-group input:focus, .control-group select:focus {
-  outline: none;
-  border-color: var(--accent-blue);
-}
-
-.btn {
-  padding: 10px 24px;
-  border: none;
-  border-radius: 6px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-primary { background: linear-gradient(135deg, var(--accent-blue), #1d4ed8); color: white; }
-.btn-primary:hover { filter: brightness(1.1); }
-.btn-green { background: linear-gradient(135deg, var(--accent-green), #059669); color: white; }
-.btn-amber { background: linear-gradient(135deg, var(--accent-amber), #d97706); color: white; }
-.btn-sm { padding: 6px 14px; font-size: 11px; }
+.vco-controls { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+.control-group label { display:block; font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--text-secondary); margin-bottom:4px; }
+.control-group input, .control-group select { width:100%; padding:8px 12px; background:var(--bg-primary); border:1px solid var(--border); border-radius:4px; color:var(--text-primary); font-family:'JetBrains Mono',monospace; font-size:13px; }
+.control-group input:focus, .control-group select:focus { outline:none; border-color:var(--gold); }
 
 /* ROSTER */
-.roster-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 8px;
-}
+.roster-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:8px; }
+.roster-item { display:flex; align-items:center; gap:10px; padding:6px 10px; border-radius:4px; transition:background 0.2s; }
+.roster-item:hover { background:var(--bg-card-hover); }
+.roster-item input[type="checkbox"] { width:16px; height:16px; accent-color:var(--gold); }
+.roster-item .name { font-size:13px; font-weight:500; flex:1; }
+.roster-item .section-tag { font-size:10px; padding:1px 6px; border-radius:3px; background:var(--gold-dim); color:var(--gold); font-weight:600; }
+.roster-item .fueler-tag { font-size:10px; padding:1px 6px; border-radius:3px; background:rgba(16,185,129,0.15); color:var(--green); font-weight:600; }
 
-.roster-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 10px;
-  border-radius: 4px;
-  transition: background 0.2s;
-}
+.hotel-summary { display:flex; gap:16px; margin:16px 0; flex-wrap:wrap; }
+.hotel-count { padding:10px 20px; border-radius:6px; font-family:'JetBrains Mono',monospace; font-weight:700; font-size:14px; }
+.hotel-count.flexbase { background:rgba(212,160,23,0.1); border:1px solid rgba(212,160,23,0.3); color:var(--gold); }
+.hotel-count.kysthotell { background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); color:var(--green); }
+.hotel-count.fosen { background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:var(--red); }
+.hotel-count .count { font-size:24px; display:block; }
+.hotel-count .label { font-size:11px; letter-spacing:1px; }
 
-.roster-item:hover { background: var(--bg-card-hover); }
-.roster-item input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent-blue); }
-.roster-item .name { font-size: 13px; font-weight: 500; flex: 1; }
+/* ASSIGNMENT EDITOR */
+.assign-editor { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px; }
+.assign-car-box { background:var(--bg-primary); border:1px solid var(--border); border-radius:8px; padding:14px; transition:all 0.2s; }
+.assign-car-box.drop-target { border-color:var(--gold); box-shadow:0 0 12px rgba(212,160,23,0.2); }
+.assign-car-box .car-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--border); }
+.assign-car-box .car-name { font-family:'JetBrains Mono',monospace; font-weight:700; font-size:15px; color:var(--gold-light); }
+.assign-car-box .car-count { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-dim); }
+.assign-car-box .dep-time { margin-bottom:8px; }
+.assign-car-box .dep-time input { width:100px; padding:4px 8px; background:var(--bg-card); border:1px solid var(--border); border-radius:4px; color:var(--gold-light); font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600; }
+.assign-car-box .dep-time input:focus { outline:none; border-color:var(--gold); }
+.assign-car-box .dep-time label { font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-right:6px; }
 
-.roster-item .section-tag {
-  font-size: 10px;
-  padding: 1px 6px;
-  border-radius: 3px;
-  background: rgba(59, 130, 246, 0.15);
-  color: var(--accent-blue);
-  font-weight: 600;
-}
+.person-chip { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; margin:3px; border-radius:4px; font-size:12px; cursor:pointer; transition:all 0.15s; border:1px solid transparent; }
+.person-chip.pilot { background:rgba(212,160,23,0.1); color:var(--gold-light); }
+.person-chip.support { background:rgba(16,185,129,0.08); color:var(--green); }
+.person-chip.driver { border-color:var(--gold); font-weight:700; }
+.person-chip.selected { background:var(--gold); color:#000; font-weight:600; }
+.person-chip:hover { filter:brightness(1.2); }
 
-.roster-item .fueler-tag {
-  font-size: 10px;
-  padding: 1px 6px;
-  border-radius: 3px;
-  background: rgba(6, 182, 212, 0.15);
-  color: var(--accent-cyan);
-  font-weight: 600;
-}
-
-.hotel-summary {
-  display: flex;
-  gap: 16px;
-  margin: 16px 0;
-  flex-wrap: wrap;
-}
-
-.hotel-count {
-  padding: 10px 20px;
-  border-radius: 6px;
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 700;
-  font-size: 14px;
-}
-
-.hotel-count.flexbase { background: rgba(255, 255, 0, 0.1); border: 1px solid rgba(255, 255, 0, 0.3); color: #fbbf24; }
-.hotel-count.kysthotell { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: var(--accent-green); }
-.hotel-count.fosen { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: var(--accent-red); }
-
-.hotel-count .count { font-size: 24px; display: block; }
-.hotel-count .label { font-size: 11px; letter-spacing: 1px; }
+.unassigned-box { background:rgba(239,68,68,0.05); border:1px dashed rgba(239,68,68,0.3); border-radius:8px; padding:14px; }
+.unassigned-box .label { font-size:12px; color:var(--red); font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
 
 /* SIGN OUT */
-.signout-form {
-  display: grid;
-  grid-template-columns: 120px 160px 1fr 1fr 120px auto;
-  gap: 8px;
-  align-items: end;
-  margin-bottom: 16px;
-}
-
-.signout-form input, .signout-form select {
-  padding: 8px 10px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  color: var(--text-primary);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-}
+.signout-form { display:grid; grid-template-columns:120px 160px 1fr 1fr 120px auto; gap:8px; align-items:end; margin-bottom:16px; }
+.signout-form input, .signout-form select { padding:8px 10px; background:var(--bg-primary); border:1px solid var(--border); border-radius:4px; color:var(--text-primary); font-family:'JetBrains Mono',monospace; font-size:12px; }
 
 /* FOOTER */
-.footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 0;
-  border-top: 1px solid var(--border);
-  margin-top: 16px;
-  font-size: 11px;
-  color: var(--text-dim);
-  font-family: 'JetBrains Mono', monospace;
-}
+.footer { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-top:1px solid var(--border); margin-top:16px; font-size:11px; color:var(--text-dim); font-family:'JetBrains Mono',monospace; }
+.refresh-indicator { display:flex; align-items:center; gap:6px; }
+.refresh-dot { width:6px; height:6px; background:var(--green); border-radius:50%; animation:pulse 3s infinite; }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
 
-.refresh-indicator { display: flex; align-items: center; gap: 6px; }
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border-bright); border-radius:3px; }
 
-.refresh-dot {
-  width: 6px; height: 6px;
-  background: var(--accent-green);
-  border-radius: 50%;
-  animation: pulse 3s infinite;
-}
-
-@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
-
-@media (max-width: 900px) {
-  .vco-controls { grid-template-columns: 1fr; }
-  .car-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
-  .signout-form { grid-template-columns: 1fr 1fr; }
-  .header { flex-direction: column; gap: 8px; }
-  .tab-bar { flex-wrap: wrap; }
+@media (max-width:900px) {
+  .vco-controls { grid-template-columns:1fr; }
+  .car-grid { grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); }
+  .assign-editor { grid-template-columns:1fr; }
+  .signout-form { grid-template-columns:1fr 1fr; }
+  .header { flex-direction:column; gap:8px; }
+  .tab-bar { flex-wrap:wrap; }
 }
 </style>
 </head>
 <body>
 
-<!-- PASSWORD SCREEN -->
 <div class="lock-screen" id="lock-screen">
   <div class="lock-box">
     <div class="badge">VCO</div>
@@ -573,9 +202,7 @@ body::before {
   </div>
 </div>
 
-<!-- MAIN APP -->
 <div class="app" id="main-app">
-
   <div class="header">
     <div class="header-left">
       <div class="header-badge">VCO</div>
@@ -590,195 +217,157 @@ body::before {
     </div>
   </div>
 
-  <div class="tab-bar">
+  <div class="tab-bar" id="tab-bar">
     <button class="tab-btn active" onclick="switchTab('dashboard')">Dashboard</button>
-    <button class="tab-btn" onclick="switchTab('vco')">VCO Panel</button>
-    <button class="tab-btn" onclick="switchTab('cars')">Car Status</button>
-    <button class="tab-btn" onclick="switchTab('signout')">Sign-Out Log</button>
+    <button class="tab-btn" onclick="switchTab('cars')">Fleet</button>
+    <button class="tab-btn vco-only" onclick="switchTab('vco')" style="display:none;">VCO Panel</button>
+    <button class="tab-btn vco-only" onclick="switchTab('signout')" style="display:none;">Sign-Out</button>
   </div>
 
-  <!-- DASHBOARD -->
+  <!-- DASHBOARD (everyone) -->
   <div class="tab-content active" id="tab-dashboard">
     <div class="card">
       <div class="card-header">
         <h2>Fleet Status</h2>
-        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-secondary);">
-          <span id="cars-avail-count">0</span> / <span id="cars-assignable-count">0</span> available
-        </span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-secondary);"><span id="cars-avail-count">0</span> / <span id="cars-assignable-count">0</span> available</span>
       </div>
       <div class="card-body">
-        <div class="car-grid" id="fleet-grid">
-          <div class="loading"><div class="spinner"></div><br>Loading fleet data...</div>
-        </div>
+        <div class="car-grid" id="fleet-grid"><div class="loading"><div class="spinner"></div><br>Loading fleet...</div></div>
       </div>
     </div>
-
     <div class="card">
       <div class="card-header">
-        <h2>Today's Morning Push</h2>
-        <span id="show-time-display" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-cyan);">Show: --</span>
+        <h2>Morning Push</h2>
+        <span id="show-time-display" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold-light);">--</span>
       </div>
       <div class="card-body" style="padding:0;overflow-x:auto;">
         <table class="assign-table">
-          <thead>
-            <tr><th>Car</th><th>Driver</th><th>Passengers</th><th>Hotel Pickup</th><th>Destination</th><th>Pickup Time</th></tr>
-          </thead>
-          <tbody id="assignment-body">
-            <tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:40px;">No assignments yet. Use VCO Panel to generate.</td></tr>
-          </tbody>
+          <thead><tr><th>Car</th><th>Driver</th><th>Passengers</th><th>Hotel</th><th>Destination</th><th>Depart</th></tr></thead>
+          <tbody id="assignment-body"><tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:40px;">No assignments yet.</td></tr></tbody>
         </table>
       </div>
     </div>
   </div>
 
-  <!-- VCO PANEL -->
+  <!-- FLEET (everyone) -->
+  <div class="tab-content" id="tab-cars">
+    <div class="card">
+      <div class="card-header"><h2>All Vehicles</h2></div>
+      <div class="card-body"><div class="car-grid" id="all-cars-grid"><div class="loading"><div class="spinner"></div><br>Loading...</div></div></div>
+    </div>
+  </div>
+
+  <!-- VCO PANEL (VCO only) -->
   <div class="tab-content" id="tab-vco">
     <div class="card">
-      <div class="card-header"><h2>Generate Car Assignments</h2></div>
+      <div class="card-header"><h2>Generate Assignments</h2></div>
       <div class="card-body">
         <div class="vco-controls">
-          <div class="control-group">
-            <label>Date</label>
-            <input type="date" id="vco-date">
-          </div>
-          <div class="control-group">
-            <label>Show Time</label>
-            <input type="text" id="vco-showtime" placeholder="0500" value="0500">
-          </div>
-          <div class="control-group">
-            <label>Destination</label>
-            <input type="text" id="vco-destination" placeholder="Ops / Flightline" value="Ops / Flightline">
-          </div>
+          <div class="control-group"><label>Date</label><input type="date" id="vco-date"></div>
+          <div class="control-group"><label>Destination</label><input type="text" id="vco-destination" placeholder="Ops / Flightline" value="Ops / Flightline"></div>
         </div>
-        <div style="margin:16px 0;display:flex;gap:12px;align-items:center;">
+        <div style="margin:16px 0;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
           <button class="btn btn-primary" onclick="autoAssign()">Auto-Assign</button>
-          <button class="btn btn-amber" onclick="clearAssignments()">Clear</button>
-          <span id="assign-status" style="font-size:12px;color:var(--text-secondary);margin-left:12px;"></span>
+          <button class="btn btn-red btn-sm" onclick="clearAssignments()">Clear</button>
+          <span id="assign-status" style="font-size:12px;color:var(--text-secondary);margin-left:8px;"></span>
         </div>
       </div>
     </div>
 
     <div class="card">
       <div class="card-header">
-        <h2>Personnel Roster</h2>
+        <h2>Roster</h2>
         <div style="display:flex;gap:8px;">
           <button class="btn btn-sm btn-primary" onclick="selectAll(true)">All Present</button>
-          <button class="btn btn-sm btn-amber" onclick="selectAll(false)">Clear All</button>
+          <button class="btn btn-sm btn-red" onclick="selectAll(false)">Clear</button>
         </div>
       </div>
       <div class="card-body">
         <div class="hotel-summary" id="hotel-summary"></div>
-        <div class="roster-grid" id="roster-grid">
-          <div class="loading"><div class="spinner"></div><br>Loading roster...</div>
-        </div>
+        <div class="roster-grid" id="roster-grid"><div class="loading"><div class="spinner"></div><br>Loading roster...</div></div>
       </div>
     </div>
 
-    <div class="card" id="assignment-preview-card" style="display:none;">
-      <div class="card-header"><h2>Assignment Preview</h2></div>
-      <div class="card-body" style="padding:0;overflow-x:auto;">
-        <table class="assign-table">
-          <thead>
-            <tr><th>Car</th><th>Driver</th><th>Passengers</th><th>Hotel</th><th>Destination</th><th>Pickup Time</th></tr>
-          </thead>
-          <tbody id="preview-body"></tbody>
-        </table>
+    <div class="card" id="editor-card" style="display:none;">
+      <div class="card-header">
+        <h2>Edit Assignments</h2>
+        <div style="font-size:12px;color:var(--text-secondary);" id="edit-hint">Tap a person, then tap a car to move them</div>
       </div>
-    </div>
-  </div>
-
-  <!-- CAR STATUS -->
-  <div class="tab-content" id="tab-cars">
-    <div class="card">
-      <div class="card-header"><h2>All Vehicles</h2></div>
       <div class="card-body">
-        <div class="car-grid" id="all-cars-grid">
-          <div class="loading"><div class="spinner"></div><br>Loading...</div>
+        <div class="unassigned-box" id="unassigned-box" onclick="moveSelectedTo('unassigned')" style="display:none;">
+          <div class="label">Unassigned</div>
+          <div id="unassigned-people"></div>
         </div>
+        <div class="assign-editor" id="assign-editor" style="margin-top:16px;"></div>
       </div>
     </div>
   </div>
 
-  <!-- SIGN-OUT LOG -->
+  <!-- SIGN-OUT (VCO only) -->
   <div class="tab-content" id="tab-signout">
     <div class="card">
       <div class="card-header"><h2>Car Sign-Out</h2></div>
       <div class="card-body">
         <div class="signout-form">
-          <div class="control-group">
-            <label>Time Out</label>
-            <input type="text" id="so-time" placeholder="0730">
-          </div>
-          <div class="control-group">
-            <label>Car</label>
-            <select id="so-car"></select>
-          </div>
-          <div class="control-group">
-            <label>Driver</label>
-            <input type="text" id="so-driver" placeholder="Name">
-          </div>
-          <div class="control-group">
-            <label>Destination</label>
-            <input type="text" id="so-dest" placeholder="Where to">
-          </div>
-          <div class="control-group">
-            <label>ETA Back</label>
-            <input type="text" id="so-eta" placeholder="0900">
-          </div>
-          <div class="control-group">
-            <label>&nbsp;</label>
-            <button class="btn btn-primary btn-sm" onclick="addSignout()">Log</button>
-          </div>
+          <div class="control-group"><label>Time Out</label><input type="text" id="so-time" placeholder="0730"></div>
+          <div class="control-group"><label>Car</label><select id="so-car"></select></div>
+          <div class="control-group"><label>Driver</label><input type="text" id="so-driver" placeholder="Name"></div>
+          <div class="control-group"><label>Destination</label><input type="text" id="so-dest" placeholder="Where to"></div>
+          <div class="control-group"><label>ETA Back</label><input type="text" id="so-eta" placeholder="0900"></div>
+          <div class="control-group"><label>&nbsp;</label><button class="btn btn-primary btn-sm" onclick="addSignout()">Log</button></div>
         </div>
         <table class="assign-table">
-          <thead>
-            <tr><th>Time Out</th><th>Car</th><th>Driver</th><th>Destination</th><th>ETA Back</th><th>Time In</th><th>Action</th></tr>
-          </thead>
-          <tbody id="signout-body">
-            <tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:20px;">No sign-outs logged today</td></tr>
-          </tbody>
+          <thead><tr><th>Time Out</th><th>Car</th><th>Driver</th><th>Destination</th><th>ETA Back</th><th>Time In</th><th>Action</th></tr></thead>
+          <tbody id="signout-body"><tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:20px;">No sign-outs logged</td></tr></tbody>
         </table>
       </div>
     </div>
   </div>
 
   <div class="footer">
-    <div>VCO CAR PLAN v2.0 | 48 FW TDY OPS</div>
-    <div class="refresh-indicator">
-      <div class="refresh-dot" id="sync-dot"></div>
-      <span>Last sync: <span id="last-sync">--</span></span>
-    </div>
-    <div><span id="car-total">--</span> cars | <span id="pax-count">--</span> pax on-site</div>
+    <div>VCO CAR PLAN v3.0 | 48 FW TDY OPS</div>
+    <div class="refresh-indicator"><div class="refresh-dot"></div><span>Last sync: <span id="last-sync">--</span></span></div>
+    <div><span id="car-total">--</span> cars | <span id="pax-count">--</span> pax</div>
   </div>
 </div>
 
 <script>
-// ============================================================
-// CONFIG — stored in localStorage, never in source
-// ============================================================
-const SHEET_ID = '1FgxIcYuaelaoqmCPNmESNjcduxqeAGNXrHljLJJu298';
-const API_KEY = 'AIzaSyA17MpRQVS5LAfOYAEkv28zY2uVzEoKHU4';
-const REFRESH_SEC = 60;
-const PASS_HASH = '5bf77be6';
+var SHEET_ID = '1FgxIcYuaelaoqmCPNmESNjcduxqeAGNXrHljLJJu298';
+var API_KEY = 'AIzaSyA17MpRQVS5LAfOYAEkv28zY2uVzEoKHU4';
+var REFRESH_SEC = 60;
+var PASS_VIEWER = '5bf77be6';
+var PASS_VCO = '44fc7d9c';
+
+// STATE
+var isVCO = false;
+var CARS = [];
+var PERSONNEL = [];
+var presentPersonnel = new Set();
+var currentAssignments = []; // [{car, plate, electric, driver, driverFueler, passengers:[], hotel, destination, departTime}]
+var signoutLog = [];
+var dataLoaded = false;
+var selectedPerson = null; // name of person being moved
 
 // ============================================================
-// PASSWORD GATE
+// PASSWORD
 // ============================================================
 function simpleHash(str) {
-  let h = 0;
-  for (let i = 0; i < str.length; i++) {
-    h = ((h << 5) - h + str.charCodeAt(i)) | 0;
-  }
+  var h = 0;
+  for (var i = 0; i < str.length; i++) h = ((h << 5) - h + str.charCodeAt(i)) | 0;
   return (h >>> 0).toString(16);
 }
 
 function tryUnlock() {
-  const input = document.getElementById('lock-input').value;
-  if (simpleHash(input) === PASS_HASH) {
-    sessionStorage.setItem('vco_auth', '1');
-    document.getElementById('lock-screen').style.display = 'none';
-    document.getElementById('main-app').classList.add('unlocked');
-    initApp();
+  var input = document.getElementById('lock-input').value;
+  var hash = simpleHash(input);
+  if (hash === PASS_VCO) {
+    isVCO = true;
+    sessionStorage.setItem('vco_auth', 'vco');
+    unlock();
+  } else if (hash === PASS_VIEWER) {
+    isVCO = false;
+    sessionStorage.setItem('vco_auth', 'viewer');
+    unlock();
   } else {
     document.getElementById('lock-error').style.display = 'block';
     document.getElementById('lock-input').value = '';
@@ -786,137 +375,92 @@ function tryUnlock() {
   }
 }
 
-document.getElementById('lock-input').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') tryUnlock();
-});
-
-// Auto-unlock if already authed this session
-if (sessionStorage.getItem('vco_auth') === '1') {
+function unlock() {
   document.getElementById('lock-screen').style.display = 'none';
   document.getElementById('main-app').classList.add('unlocked');
-  window.addEventListener('DOMContentLoaded', initApp);
+  if (isVCO) {
+    document.querySelectorAll('.vco-only').forEach(function(el) { el.style.display = ''; });
+  }
+  initApp();
 }
 
-// ============================================================
-// STATE — all loaded from sheet, nothing hardcoded
-// ============================================================
-let CARS = [];
-let PERSONNEL = [];
-let presentPersonnel = new Set();
-let currentAssignments = [];
-let signoutLog = [];
-let dataLoaded = false;
+document.getElementById('lock-input').addEventListener('keydown', function(e) { if (e.key === 'Enter') tryUnlock(); });
+
+var savedAuth = sessionStorage.getItem('vco_auth');
+if (savedAuth === 'vco') { isVCO = true; unlock(); }
+else if (savedAuth === 'viewer') { isVCO = false; unlock(); }
 
 // ============================================================
-// GOOGLE SHEETS FETCH
+// SHEETS API
 // ============================================================
-async function fetchSheet(range) {
-  const url = 'https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID + '/values/' + encodeURIComponent(range) + '?key=' + API_KEY;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('Sheet fetch failed: ' + res.status);
-  const data = await res.json();
-  return data.values || [];
+function fetchSheet(range) {
+  return fetch('https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID + '/values/' + encodeURIComponent(range) + '?key=' + API_KEY)
+    .then(function(r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function(d) { return d.values || []; });
 }
 
-async function loadAllData() {
-  try {
-    const [configRows, rosterRows, availRows, signoutRows] = await Promise.all([
-      fetchSheet('Config!A3:H23'),
-      fetchSheet('Roster!A4:F60'),
-      fetchSheet('Availability!A4:G17'),
-      fetchSheet('Availability!A20:G40'),
-    ]);
+function loadAllData() {
+  return Promise.all([
+    fetchSheet('Config!A3:H23'),
+    fetchSheet('Roster!A4:F60'),
+    fetchSheet('Availability!A4:G17'),
+    fetchSheet('Availability!A20:G40'),
+  ]).then(function(results) {
+    var configRows = results[0], rosterRows = results[1], availRows = results[2], signoutRows = results[3];
 
-    // Parse TDY location
-    if (configRows[0] && configRows[0][1]) {
-      document.getElementById('tdy-location').textContent = configRows[0][1].toUpperCase();
-    }
+    if (configRows[0] && configRows[0][1]) document.getElementById('tdy-location').textContent = configRows[0][1].toUpperCase();
 
-    // Parse cars (rows starting at index 7 = row 10 in sheet, after header at index 6)
     CARS = [];
-    for (let i = 7; i < configRows.length; i++) {
-      const r = configRows[i];
+    for (var i = 7; i < configRows.length; i++) {
+      var r = configRows[i];
       if (!r || !r[0] || !r[0].startsWith('Car')) continue;
-      CARS.push({
-        num: parseInt(r[0].replace('Car ', '')),
-        name: r[1] || '',
-        plate: r[2] || '',
-        electric: (r[3] || '').toLowerCase() === 'yes',
-        capacity: parseInt(r[4]) || 5,
-        permanent: !!(r[5]),
-        assignedTo: r[5] || '',
-        status: (r[6] || '').toLowerCase().includes('permanent') ? 'permanent' : 'available',
-        driver: '',
-        dest: '',
-        eta: '',
-      });
+      CARS.push({ num: parseInt(r[0].replace('Car ','')), name: r[1]||'', plate: r[2]||'', electric: (r[3]||'').toLowerCase()==='yes', capacity: parseInt(r[4])||5, permanent: !!(r[5]), assignedTo: r[5]||'', status: (r[6]||'').toLowerCase().includes('permanent') ? 'permanent' : 'available', driver:'', dest:'', eta:'' });
     }
 
-    // Parse availability status overlay
     if (availRows.length > 1) {
-      for (let i = 1; i < availRows.length; i++) {
-        const r = availRows[i];
+      for (var i = 1; i < availRows.length; i++) {
+        var r = availRows[i];
         if (!r || !r[1]) continue;
-        const car = CARS.find(c => c.name === r[1]);
+        var car = CARS.find(function(c) { return c.name === r[1]; });
         if (car && !car.permanent) {
-          const st = (r[2] || '').toLowerCase();
+          var st = (r[2]||'').toLowerCase();
           if (st.includes('commit') || st.includes('out')) car.status = 'committed';
           else if (st.includes('return')) car.status = 'returning';
           else car.status = 'available';
-          car.driver = r[3] || '';
-          car.dest = r[4] || '';
-          car.eta = r[5] || '';
+          car.driver = r[3]||''; car.dest = r[4]||''; car.eta = r[5]||'';
         }
       }
     }
 
-    // Parse personnel from Roster tab
     PERSONNEL = [];
     presentPersonnel = new Set();
     if (rosterRows.length > 1) {
-      for (let i = 1; i < rosterRows.length; i++) {
-        const r = rosterRows[i];
+      for (var i = 1; i < rosterRows.length; i++) {
+        var r = rosterRows[i];
         if (!r || !r[0]) continue;
-        const idx = PERSONNEL.length;
-        PERSONNEL.push({
-          name: r[0],
-          section: r[1] || '',
-          hotel: r[2] || '',
-          fueler: (r[5] || '').toLowerCase() === 'yes',
-        });
-        if ((r[3] || '').toLowerCase() === 'yes') {
-          presentPersonnel.add(idx);
-        }
+        var idx = PERSONNEL.length;
+        PERSONNEL.push({ name: r[0], section: r[1]||'', hotel: r[2]||'', fueler: (r[5]||'').toLowerCase()==='yes' });
+        if ((r[3]||'').toLowerCase() === 'yes') presentPersonnel.add(idx);
       }
     }
 
-    // Parse sign-out log
     signoutLog = [];
     if (signoutRows.length > 1) {
-      for (let i = 1; i < signoutRows.length; i++) {
-        const r = signoutRows[i];
+      for (var i = 1; i < signoutRows.length; i++) {
+        var r = signoutRows[i];
         if (!r || !r[0]) continue;
-        signoutLog.push({
-          time: r[0],
-          car: r[1] || '',
-          driver: r[2] || '',
-          dest: r[4] || '',
-          eta: r[5] || '',
-          timeIn: r[6] || '',
-        });
+        signoutLog.push({ time:r[0], car:r[1]||'', driver:r[2]||'', dest:r[4]||'', eta:r[5]||'', timeIn:r[6]||'' });
       }
     }
 
     dataLoaded = true;
     document.getElementById('car-total').textContent = CARS.length;
-    document.getElementById('last-sync').textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
-
+    document.getElementById('last-sync').textContent = new Date().toLocaleTimeString('en-US',{hour12:false});
     renderAll();
-  } catch (err) {
-    console.error('Data load error:', err);
-    document.getElementById('fleet-grid').innerHTML =
-      '<div class="loading" style="color:var(--accent-red);">Failed to load data: ' + err.message + '</div>';
-  }
+  }).catch(function(err) {
+    console.error('Load error:', err);
+    document.getElementById('fleet-grid').innerHTML = '<div class="loading" style="color:var(--red);">Failed: ' + err.message + '</div>';
+  });
 }
 
 // ============================================================
@@ -925,233 +469,255 @@ async function loadAllData() {
 function renderAll() {
   renderFleetGrid('fleet-grid');
   renderFleetGrid('all-cars-grid');
-  renderRoster();
+  if (isVCO) { renderRoster(); populateCarSelect(); updateHotelSummary(); }
   renderAssignments();
   renderSignoutLog();
-  populateCarSelect();
-  updateHotelSummary();
 }
 
-function renderFleetGrid(containerId) {
-  const container = document.getElementById(containerId);
+function renderFleetGrid(id) {
+  var el = document.getElementById(id);
   if (!dataLoaded) return;
-
-  const assignable = CARS.filter(c => !c.permanent);
-  const permanent = CARS.filter(c => c.permanent);
-  const availCount = assignable.filter(c => c.status === 'available').length;
-
-  document.getElementById('cars-avail-count').textContent = availCount;
+  var assignable = CARS.filter(function(c){return !c.permanent;});
+  var permanent = CARS.filter(function(c){return c.permanent;});
+  document.getElementById('cars-avail-count').textContent = assignable.filter(function(c){return c.status==='available';}).length;
   document.getElementById('cars-assignable-count').textContent = assignable.length;
 
-  container.innerHTML = [...assignable, ...permanent].map(function(car) {
-    var elecTag = car.electric ? ' <span class="electric">EV</span>' : '';
-    var statusLabel = car.permanent ? 'PERMANENT' :
-      car.status === 'available' ? 'AVAILABLE' :
-      car.status === 'committed' ? 'COMMITTED' : 'RETURNING';
-
-    return '<div class="car-card ' + car.status + '">' +
-      '<div class="car-card-name">' + car.name + '</div>' +
-      '<div class="car-card-plate">' + car.plate + elecTag + '</div>' +
-      '<div class="car-status-badge">' + statusLabel + '</div>' +
-      (car.driver || car.assignedTo ?
-        '<div class="car-card-detail"><strong>' + (car.driver || car.assignedTo) + '</strong>' +
-        (car.dest ? '<br>' + car.dest : '') +
-        (car.eta ? '<br>ETA: ' + car.eta : '') + '</div>' : '') +
-    '</div>';
+  el.innerHTML = assignable.concat(permanent).map(function(car) {
+    var ev = car.electric ? ' <span class="electric">EV</span>' : '';
+    var sl = car.permanent ? 'PERMANENT' : car.status==='available' ? 'AVAILABLE' : car.status==='committed' ? 'COMMITTED' : 'RETURNING';
+    return '<div class="car-card '+car.status+'"><div class="car-card-name">'+car.name+'</div><div class="car-card-plate">'+car.plate+ev+'</div><div class="car-status-badge">'+sl+'</div>'+(car.driver||car.assignedTo?'<div class="car-card-detail"><strong>'+(car.driver||car.assignedTo)+'</strong>'+(car.dest?'<br>'+car.dest:'')+(car.eta?'<br>ETA: '+car.eta:'')+'</div>':'')+'</div>';
   }).join('');
 }
 
 function renderRoster() {
   var grid = document.getElementById('roster-grid');
   if (!dataLoaded) return;
-
   var hotels = {};
-  PERSONNEL.forEach(function(p, i) {
-    if (!hotels[p.hotel]) hotels[p.hotel] = [];
-    hotels[p.hotel].push({ name: p.name, section: p.section, fueler: p.fueler, idx: i });
-  });
-
+  PERSONNEL.forEach(function(p,i) { if(!hotels[p.hotel]) hotels[p.hotel]=[]; hotels[p.hotel].push({name:p.name,section:p.section,fueler:p.fueler,idx:i}); });
   var html = '';
-  var hotelOrder = ['Flexbase', 'Kysthotell', 'Fosen Fjord'];
-  hotelOrder.forEach(function(hotel) {
-    var people = hotels[hotel] || [];
-    if (people.length === 0) return;
-    var hc = hotel === 'Flexbase' ? 'flexbase' : hotel === 'Kysthotell' ? 'kysthotell' : 'fosen';
-    html += '<div style="grid-column:1/-1;margin-top:12px;margin-bottom:4px;">' +
-      '<span class="hotel-badge ' + hc + '">' + hotel + ' (' + people.length + ')</span></div>';
+  ['Flexbase','Kysthotell','Fosen Fjord'].forEach(function(hotel) {
+    var people = hotels[hotel]||[];
+    if (!people.length) return;
+    var hc = hotel==='Flexbase'?'flexbase':hotel==='Kysthotell'?'kysthotell':'fosen';
+    html += '<div style="grid-column:1/-1;margin-top:12px;margin-bottom:4px;"><span class="hotel-badge '+hc+'">'+hotel+' ('+people.length+')</span></div>';
     people.forEach(function(p) {
-      var checked = presentPersonnel.has(p.idx) ? 'checked' : '';
-      html += '<div class="roster-item">' +
-        '<input type="checkbox" ' + checked + ' onchange="togglePresent(' + p.idx + ',this.checked)">' +
-        '<span class="name">' + p.name + '</span>' +
-        '<span class="section-tag">' + p.section + '</span>' +
-        (p.fueler ? '<span class="fueler-tag">FUELER</span>' : '') +
-      '</div>';
+      html += '<div class="roster-item"><input type="checkbox" '+(presentPersonnel.has(p.idx)?'checked':'')+' onchange="togglePresent('+p.idx+',this.checked)"><span class="name">'+p.name+'</span><span class="section-tag">'+p.section+'</span>'+(p.fueler?'<span class="fueler-tag">FUELER</span>':'')+'</div>';
     });
   });
   grid.innerHTML = html;
 }
 
-function togglePresent(idx, checked) {
-  if (checked) presentPersonnel.add(idx);
-  else presentPersonnel.delete(idx);
-  updateHotelSummary();
-}
-
-function selectAll(val) {
-  if (val) PERSONNEL.forEach(function(_, i) { presentPersonnel.add(i); });
-  else presentPersonnel.clear();
-  renderRoster();
-  updateHotelSummary();
-}
+function togglePresent(idx,checked) { if(checked) presentPersonnel.add(idx); else presentPersonnel.delete(idx); updateHotelSummary(); }
+function selectAll(val) { if(val) PERSONNEL.forEach(function(_,i){presentPersonnel.add(i);}); else presentPersonnel.clear(); renderRoster(); updateHotelSummary(); }
 
 function updateHotelSummary() {
-  var counts = { 'Flexbase': 0, 'Kysthotell': 0, 'Fosen Fjord': 0 };
-  presentPersonnel.forEach(function(i) { counts[PERSONNEL[i].hotel] = (counts[PERSONNEL[i].hotel] || 0) + 1; });
-  var total = presentPersonnel.size;
-  document.getElementById('pax-count').textContent = total;
-
+  var c = {'Flexbase':0,'Kysthotell':0,'Fosen Fjord':0};
+  presentPersonnel.forEach(function(i){c[PERSONNEL[i].hotel]=(c[PERSONNEL[i].hotel]||0)+1;});
+  var t = presentPersonnel.size;
+  document.getElementById('pax-count').textContent = t;
   document.getElementById('hotel-summary').innerHTML =
-    '<div class="hotel-count flexbase"><span class="count">' + (counts['Flexbase'] || 0) + '</span><span class="label">FLEXBASE</span></div>' +
-    '<div class="hotel-count kysthotell"><span class="count">' + (counts['Kysthotell'] || 0) + '</span><span class="label">KYSTHOTELL</span></div>' +
-    '<div class="hotel-count fosen"><span class="count">' + (counts['Fosen Fjord'] || 0) + '</span><span class="label">FOSEN FJORD</span></div>' +
-    '<div class="hotel-count" style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);color:var(--accent-blue);"><span class="count">' + total + '</span><span class="label">TOTAL</span></div>';
+    '<div class="hotel-count flexbase"><span class="count">'+(c['Flexbase']||0)+'</span><span class="label">FLEXBASE</span></div>'+
+    '<div class="hotel-count kysthotell"><span class="count">'+(c['Kysthotell']||0)+'</span><span class="label">KYSTHOTELL</span></div>'+
+    '<div class="hotel-count fosen"><span class="count">'+(c['Fosen Fjord']||0)+'</span><span class="label">FOSEN FJORD</span></div>'+
+    '<div class="hotel-count" style="background:rgba(212,160,23,0.1);border:1px solid rgba(212,160,23,0.3);color:var(--gold);"><span class="count">'+t+'</span><span class="label">TOTAL</span></div>';
 }
 
 // ============================================================
-// AUTO-ASSIGN
+// AUTO-ASSIGN (even spread)
 // ============================================================
 function autoAssign() {
-  if (!dataLoaded || CARS.length === 0 || PERSONNEL.length === 0) {
-    document.getElementById('assign-status').textContent = 'Data not loaded yet.';
-    return;
-  }
-
-  var showTime = document.getElementById('vco-showtime').value || '0500';
+  if (!dataLoaded || !CARS.length || !PERSONNEL.length) { document.getElementById('assign-status').textContent='No data.'; return; }
   var destination = document.getElementById('vco-destination').value || 'Ops';
-
   var hotelGroups = {};
-  presentPersonnel.forEach(function(i) {
-    var p = PERSONNEL[i];
-    if (!hotelGroups[p.hotel]) hotelGroups[p.hotel] = [];
-    hotelGroups[p.hotel].push(p);
-  });
+  presentPersonnel.forEach(function(i) { var p=PERSONNEL[i]; if(!hotelGroups[p.hotel]) hotelGroups[p.hotel]=[]; hotelGroups[p.hotel].push(p); });
 
-  var availCars = CARS.filter(function(c) { return !c.permanent; });
+  var availCars = CARS.filter(function(c){return !c.permanent;});
   var carIdx = 0;
-  var assignments = [];
+  currentAssignments = [];
 
-  ['Flexbase', 'Kysthotell', 'Fosen Fjord'].forEach(function(hotel) {
+  ['Flexbase','Kysthotell','Fosen Fjord'].forEach(function(hotel) {
     var people = hotelGroups[hotel] || [];
-    if (people.length === 0) return;
-
-    var pilots = people.filter(function(p) { return p.section === 'Pilots'; });
-    var support = people.filter(function(p) { return p.section !== 'Pilots'; });
+    if (!people.length) return;
+    var pilots = people.filter(function(p){return p.section==='Pilots';});
+    var support = people.filter(function(p){return p.section!=='Pilots';});
 
     [pilots, support].forEach(function(group) {
-      if (group.length === 0) return;
-      var remaining = group.slice();
+      if (!group.length) return;
+      var carsNeeded = Math.ceil(group.length / 5);
+      if (carIdx + carsNeeded > availCars.length) carsNeeded = availCars.length - carIdx;
+      if (carsNeeded <= 0) return;
 
-      while (remaining.length > 0 && carIdx < availCars.length) {
+      // Even spread: distribute people across carsNeeded cars
+      var carLoads = [];
+      for (var c = 0; c < carsNeeded; c++) carLoads.push([]);
+      // Put fuelers first so they become drivers
+      var fuelers = group.filter(function(p){return p.fueler;});
+      var nonFuelers = group.filter(function(p){return !p.fueler;});
+      var ordered = fuelers.concat(nonFuelers);
+      for (var p = 0; p < ordered.length; p++) {
+        carLoads[p % carsNeeded].push(ordered[p]);
+      }
+
+      for (var c = 0; c < carsNeeded; c++) {
+        var load = carLoads[c];
+        if (!load.length) continue;
         var car = availCars[carIdx];
-        var load = remaining.splice(0, 5);
-
+        // First fueler in the load is the driver
         var driverIdx = -1;
-        for (var d = 0; d < load.length; d++) {
-          if (load[d].fueler) { driverIdx = d; break; }
-        }
-
+        for (var d = 0; d < load.length; d++) { if (load[d].fueler) { driverIdx = d; break; } }
         var driver;
-        if (driverIdx >= 0) {
-          driver = load.splice(driverIdx, 1)[0];
-        } else {
-          driver = load.shift();
-        }
+        if (driverIdx >= 0) { driver = load.splice(driverIdx, 1)[0]; }
+        else { driver = load.shift(); }
 
-        assignments.push({
-          car: car.name,
-          plate: car.plate,
-          electric: car.electric,
-          driver: driver.name,
-          driverFueler: driver.fueler,
-          passengers: load.map(function(p) { return p.name; }),
-          hotel: hotel,
-          destination: destination,
-          pickupTime: showTime,
+        currentAssignments.push({
+          car: car.name, plate: car.plate, electric: car.electric,
+          driver: driver.name, driverFueler: driver.fueler,
+          passengers: load.map(function(p){return p.name;}),
+          hotel: hotel, destination: destination, departTime: '0500'
         });
         carIdx++;
       }
     });
   });
 
-  currentAssignments = assignments;
   renderAssignments();
-  renderAssignmentPreview();
+  renderEditor();
+  updateCarStatuses();
 
+  var totalPax = currentAssignments.reduce(function(s,a){return s+1+a.passengers.length;},0);
+  document.getElementById('assign-status').textContent = currentAssignments.length+' cars, '+totalPax+' pax';
+}
+
+function updateCarStatuses() {
   CARS.forEach(function(c) {
     if (!c.permanent) {
-      var a = assignments.find(function(a) { return a.car === c.name; });
-      if (a) { c.status = 'committed'; c.driver = a.driver; c.dest = a.destination; }
-      else { c.status = 'available'; c.driver = ''; c.dest = ''; }
+      var a = currentAssignments.find(function(a){return a.car===c.name;});
+      if (a) { c.status='committed'; c.driver=a.driver; c.dest=a.destination; }
+      else { c.status='available'; c.driver=''; c.dest=''; }
     }
   });
   renderFleetGrid('fleet-grid');
   renderFleetGrid('all-cars-grid');
-
-  document.getElementById('show-time-display').textContent = 'Show: ' + showTime + 'L';
-  var totalPax = assignments.reduce(function(sum, a) { return sum + 1 + a.passengers.length; }, 0);
-  document.getElementById('assign-status').textContent = assignments.length + ' cars assigned, ' + totalPax + ' personnel loaded';
-}
-
-function renderAssignments() {
-  var body = document.getElementById('assignment-body');
-  if (currentAssignments.length === 0) {
-    body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:40px;">No assignments yet. Use VCO Panel to generate.</td></tr>';
-    return;
-  }
-
-  body.innerHTML = currentAssignments.map(function(a) {
-    var hc = a.hotel === 'Flexbase' ? 'flexbase' : a.hotel === 'Kysthotell' ? 'kysthotell' : 'fosen';
-    var ev = a.electric ? ' <span style="color:var(--accent-green);font-size:10px;">EV</span>' : '';
-    return '<tr>' +
-      '<td><strong>' + a.car + '</strong>' + ev + '<br><span style="color:var(--text-dim);font-size:11px;">' + a.plate + '</span></td>' +
-      '<td><span class="driver-name">' + a.driver + '</span>' + (a.driverFueler ? ' <span style="color:var(--accent-cyan);font-size:10px;">FUELER</span>' : '') + '</td>' +
-      '<td class="pax-list">' + (a.passengers.length > 0 ? a.passengers.join('<br>') : '<em>Empty seats</em>') + '</td>' +
-      '<td><span class="hotel-badge ' + hc + '">' + a.hotel + '</span></td>' +
-      '<td>' + a.destination + '</td>' +
-      '<td style="font-family:JetBrains Mono,monospace;font-weight:600;">' + a.pickupTime + 'L</td>' +
-    '</tr>';
-  }).join('');
-}
-
-function renderAssignmentPreview() {
-  var card = document.getElementById('assignment-preview-card');
-  var body = document.getElementById('preview-body');
-  if (currentAssignments.length === 0) { card.style.display = 'none'; return; }
-  card.style.display = 'block';
-  body.innerHTML = currentAssignments.map(function(a) {
-    var hc = a.hotel === 'Flexbase' ? 'flexbase' : a.hotel === 'Kysthotell' ? 'kysthotell' : 'fosen';
-    return '<tr>' +
-      '<td><strong>' + a.car + '</strong></td>' +
-      '<td class="driver-name">' + a.driver + '</td>' +
-      '<td class="pax-list">' + a.passengers.join(', ') + '</td>' +
-      '<td><span class="hotel-badge ' + hc + '">' + a.hotel + '</span></td>' +
-      '<td>' + a.destination + '</td>' +
-      '<td style="font-family:JetBrains Mono,monospace;">' + a.pickupTime + 'L</td>' +
-    '</tr>';
-  }).join('');
 }
 
 function clearAssignments() {
   currentAssignments = [];
-  CARS.forEach(function(c) {
-    if (!c.permanent) { c.status = 'available'; c.driver = ''; c.dest = ''; c.eta = ''; }
-  });
+  selectedPerson = null;
+  CARS.forEach(function(c) { if(!c.permanent){c.status='available';c.driver='';c.dest='';c.eta='';} });
   renderAssignments();
-  renderAssignmentPreview();
+  document.getElementById('editor-card').style.display = 'none';
   renderFleetGrid('fleet-grid');
   renderFleetGrid('all-cars-grid');
   document.getElementById('assign-status').textContent = 'Cleared.';
+}
+
+// ============================================================
+// RENDER ASSIGNMENTS (viewer table)
+// ============================================================
+function renderAssignments() {
+  var body = document.getElementById('assignment-body');
+  if (!currentAssignments.length) {
+    body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:40px;">No assignments yet.</td></tr>';
+    document.getElementById('show-time-display').textContent = '--';
+    return;
+  }
+  document.getElementById('show-time-display').textContent = currentAssignments.length + ' cars assigned';
+  body.innerHTML = currentAssignments.map(function(a) {
+    var hc = a.hotel==='Flexbase'?'flexbase':a.hotel==='Kysthotell'?'kysthotell':'fosen';
+    var ev = a.electric ? ' <span style="color:var(--green);font-size:10px;">EV</span>' : '';
+    return '<tr>'+
+      '<td><strong>'+a.car+'</strong>'+ev+'<br><span style="color:var(--text-dim);font-size:11px;">'+a.plate+'</span></td>'+
+      '<td><span class="driver-name">'+a.driver+'</span>'+(a.driverFueler?' <span style="color:var(--green);font-size:10px;">F</span>':'')+'</td>'+
+      '<td class="pax-list">'+(a.passengers.length?a.passengers.join('<br>'):'<em style="color:var(--text-dim);">--</em>')+'</td>'+
+      '<td><span class="hotel-badge '+hc+'">'+a.hotel+'</span></td>'+
+      '<td>'+a.destination+'</td>'+
+      '<td style="font-family:JetBrains Mono,monospace;font-weight:600;color:var(--gold-light);">'+a.departTime+'L</td>'+
+    '</tr>';
+  }).join('');
+}
+
+// ============================================================
+// EDITOR (VCO tap-to-move)
+// ============================================================
+function renderEditor() {
+  if (!isVCO) return;
+  var card = document.getElementById('editor-card');
+  card.style.display = 'block';
+  var editor = document.getElementById('assign-editor');
+
+  editor.innerHTML = currentAssignments.map(function(a, idx) {
+    var paxHtml = '';
+    // Driver chip
+    var dClass = 'person-chip driver ' + (PERSONNEL.find(function(p){return p.name===a.driver;})&&PERSONNEL.find(function(p){return p.name===a.driver;}).section==='Pilots' ? 'pilot' : 'support');
+    if (selectedPerson === a.driver) dClass += ' selected';
+    paxHtml += '<span class="'+dClass+'" onclick="selectPerson(\''+esc(a.driver)+'\')">'+a.driver+' (D)</span>';
+    // Passenger chips
+    a.passengers.forEach(function(name) {
+      var p = PERSONNEL.find(function(p){return p.name===name;});
+      var cls = 'person-chip ' + (p && p.section==='Pilots' ? 'pilot' : 'support');
+      if (selectedPerson === name) cls += ' selected';
+      paxHtml += '<span class="'+cls+'" onclick="selectPerson(\''+esc(name)+'\')">'+name+'</span>';
+    });
+
+    return '<div class="assign-car-box" onclick="moveSelectedTo('+idx+')">'+
+      '<div class="car-header"><span class="car-name">'+a.car+'</span><span class="car-count">'+(1+a.passengers.length)+'/5</span></div>'+
+      '<div class="dep-time"><label>Depart:</label><input type="text" value="'+a.departTime+'" onchange="setDepartTime('+idx+',this.value)" onclick="event.stopPropagation()"></div>'+
+      '<div>'+paxHtml+'</div>'+
+    '</div>';
+  }).join('');
+}
+
+function esc(s) { return s.replace(/'/g, "\\'"); }
+
+function selectPerson(name) {
+  event.stopPropagation();
+  if (selectedPerson === name) { selectedPerson = null; }
+  else { selectedPerson = name; }
+  renderEditor();
+}
+
+function moveSelectedTo(targetIdx) {
+  if (!selectedPerson) return;
+  var name = selectedPerson;
+
+  // Remove from current assignment
+  for (var i = 0; i < currentAssignments.length; i++) {
+    var a = currentAssignments[i];
+    if (a.driver === name) {
+      // Moving the driver - need to promote a passenger
+      if (a.passengers.length > 0) {
+        a.driver = a.passengers.shift();
+        a.driverFueler = !!(PERSONNEL.find(function(p){return p.name===a.driver;}) || {}).fueler;
+      } else {
+        // Only person in car, remove assignment
+        currentAssignments.splice(i, 1);
+        break;
+      }
+    } else {
+      var pIdx = a.passengers.indexOf(name);
+      if (pIdx >= 0) a.passengers.splice(pIdx, 1);
+    }
+  }
+
+  // Add to target
+  if (targetIdx !== 'unassigned' && targetIdx >= 0 && targetIdx < currentAssignments.length) {
+    var target = currentAssignments[targetIdx];
+    if (1 + target.passengers.length < 5) {
+      target.passengers.push(name);
+    }
+  }
+
+  selectedPerson = null;
+  renderEditor();
+  renderAssignments();
+  updateCarStatuses();
+}
+
+function setDepartTime(idx, val) {
+  if (idx >= 0 && idx < currentAssignments.length) {
+    currentAssignments[idx].departTime = val;
+    renderAssignments();
+  }
 }
 
 // ============================================================
@@ -1159,64 +725,36 @@ function clearAssignments() {
 // ============================================================
 function populateCarSelect() {
   var sel = document.getElementById('so-car');
-  sel.innerHTML = '<option value="">Select car</option>' +
-    CARS.filter(function(c) { return !c.permanent; }).map(function(c) {
-      return '<option value="' + c.name + '">' + c.name + ' (' + c.plate + ')</option>';
-    }).join('');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Select car</option>' + CARS.filter(function(c){return !c.permanent;}).map(function(c) {
+    return '<option value="'+c.name+'">'+c.name+' ('+c.plate+')</option>';
+  }).join('');
 }
 
 function addSignout() {
-  var time = document.getElementById('so-time').value;
-  var car = document.getElementById('so-car').value;
-  var driver = document.getElementById('so-driver').value;
-  var dest = document.getElementById('so-dest').value;
-  var eta = document.getElementById('so-eta').value;
-  if (!time || !car || !driver) return;
-
-  signoutLog.push({ time: time, car: car, driver: driver, dest: dest, eta: eta, timeIn: '' });
+  var time=document.getElementById('so-time').value, car=document.getElementById('so-car').value, driver=document.getElementById('so-driver').value, dest=document.getElementById('so-dest').value, eta=document.getElementById('so-eta').value;
+  if (!time||!car||!driver) return;
+  signoutLog.push({time:time,car:car,driver:driver,dest:dest,eta:eta,timeIn:''});
   renderSignoutLog();
-
-  var cs = CARS.find(function(c) { return c.name === car; });
-  if (cs) { cs.status = 'committed'; cs.driver = driver; cs.dest = dest; cs.eta = eta; }
-  renderFleetGrid('fleet-grid');
-  renderFleetGrid('all-cars-grid');
-
-  document.getElementById('so-time').value = '';
-  document.getElementById('so-driver').value = '';
-  document.getElementById('so-dest').value = '';
-  document.getElementById('so-eta').value = '';
+  var cs=CARS.find(function(c){return c.name===car;});
+  if(cs){cs.status='committed';cs.driver=driver;cs.dest=dest;cs.eta=eta;}
+  renderFleetGrid('fleet-grid'); renderFleetGrid('all-cars-grid');
+  ['so-time','so-driver','so-dest','so-eta'].forEach(function(id){document.getElementById(id).value='';});
 }
 
 function returnCar(idx) {
-  var entry = signoutLog[idx];
-  var now = new Date();
-  entry.timeIn = String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0');
-
-  var cs = CARS.find(function(c) { return c.name === entry.car; });
-  if (cs) { cs.status = 'available'; cs.driver = ''; cs.dest = ''; cs.eta = ''; }
-
-  renderSignoutLog();
-  renderFleetGrid('fleet-grid');
-  renderFleetGrid('all-cars-grid');
+  var e=signoutLog[idx]; var now=new Date();
+  e.timeIn=String(now.getHours()).padStart(2,'0')+String(now.getMinutes()).padStart(2,'0');
+  var cs=CARS.find(function(c){return c.name===e.car;});
+  if(cs){cs.status='available';cs.driver='';cs.dest='';cs.eta='';}
+  renderSignoutLog(); renderFleetGrid('fleet-grid'); renderFleetGrid('all-cars-grid');
 }
 
 function renderSignoutLog() {
-  var body = document.getElementById('signout-body');
-  if (signoutLog.length === 0) {
-    body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:20px;">No sign-outs logged today</td></tr>';
-    return;
-  }
-  body.innerHTML = signoutLog.map(function(s, i) {
-    return '<tr>' +
-      '<td style="font-family:JetBrains Mono,monospace;color:var(--accent-amber);font-weight:600;">' + s.time + 'L</td>' +
-      '<td><strong>' + s.car + '</strong></td>' +
-      '<td>' + s.driver + '</td>' +
-      '<td>' + s.dest + '</td>' +
-      '<td style="font-family:JetBrains Mono,monospace;">' + (s.eta ? s.eta + 'L' : '--') + '</td>' +
-      '<td style="font-family:JetBrains Mono,monospace;">' + (s.timeIn ? s.timeIn + 'L' : '--') + '</td>' +
-      '<td>' + (s.timeIn ? '<span style="color:var(--accent-green);">Returned</span>' :
-        '<button class="btn btn-sm btn-green" onclick="returnCar(' + i + ')">Return</button>') + '</td>' +
-    '</tr>';
+  var body=document.getElementById('signout-body');
+  if(!signoutLog.length){body.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:20px;">No sign-outs logged</td></tr>';return;}
+  body.innerHTML=signoutLog.map(function(s,i){
+    return '<tr><td style="font-family:JetBrains Mono,monospace;color:var(--gold);font-weight:600;">'+s.time+'L</td><td><strong>'+s.car+'</strong></td><td>'+s.driver+'</td><td>'+s.dest+'</td><td style="font-family:JetBrains Mono,monospace;">'+(s.eta?s.eta+'L':'--')+'</td><td style="font-family:JetBrains Mono,monospace;">'+(s.timeIn?s.timeIn+'L':'--')+'</td><td>'+(s.timeIn?'<span style="color:var(--green);">Returned</span>':'<button class="btn btn-sm btn-green" onclick="returnCar('+i+')">Return</button>')+'</td></tr>';
   }).join('');
 }
 
@@ -1224,34 +762,23 @@ function renderSignoutLog() {
 // CLOCK & TABS
 // ============================================================
 function updateClock() {
-  var now = new Date();
-  var h = String(now.getHours()).padStart(2, '0');
-  var m = String(now.getMinutes()).padStart(2, '0');
-  var s = String(now.getSeconds()).padStart(2, '0');
-  document.getElementById('clock').textContent = h + ':' + m + ':' + s + 'L';
-  var opts = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
-  document.getElementById('date-display').textContent = now.toLocaleDateString('en-US', opts).toUpperCase();
+  var now=new Date();
+  document.getElementById('clock').textContent = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0')+'L';
+  document.getElementById('date-display').textContent = now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'short',day:'numeric'}).toUpperCase();
 }
 
 function switchTab(tab) {
-  document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
-  document.querySelectorAll('.tab-btn').forEach(function(el) { el.classList.remove('active'); });
-  document.getElementById('tab-' + tab).classList.add('active');
-  var tabMap = { dashboard: 'Dashboard', vco: 'VCO Panel', cars: 'Car Status', signout: 'Sign-Out Log' };
-  document.querySelectorAll('.tab-btn').forEach(function(el) {
-    if (el.textContent === tabMap[tab]) el.classList.add('active');
-  });
+  document.querySelectorAll('.tab-content').forEach(function(el){el.classList.remove('active');});
+  document.querySelectorAll('.tab-btn').forEach(function(el){el.classList.remove('active');});
+  document.getElementById('tab-'+tab).classList.add('active');
+  var map={dashboard:'Dashboard',vco:'VCO Panel',cars:'Fleet',signout:'Sign-Out'};
+  document.querySelectorAll('.tab-btn').forEach(function(el){if(el.textContent===map[tab])el.classList.add('active');});
 }
 
-// ============================================================
-// INIT
-// ============================================================
 function initApp() {
   document.getElementById('vco-date').value = new Date().toISOString().split('T')[0];
-  updateClock();
-  setInterval(updateClock, 1000);
-  loadAllData();
-  setInterval(loadAllData, REFRESH_SEC * 1000);
+  updateClock(); setInterval(updateClock, 1000);
+  loadAllData(); setInterval(loadAllData, REFRESH_SEC * 1000);
 }
 </script>
 </body>
