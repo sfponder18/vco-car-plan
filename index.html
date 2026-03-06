@@ -447,7 +447,7 @@ function loadAllData() {
     CARS = [];
     for (var i = 7; i < configRows.length; i++) {
       var r = configRows[i];
-      if (!r || !r[0] || !r[0].startsWith('Car')) continue;
+      if (!r || !r[0] || !r[0].match(/^Car \d/)) continue;
       var plate = r[2]||'';
       var isElectric = plate.toUpperCase().startsWith('E');
       CARS.push({ num: parseInt(r[0].replace('Car ','')), name: r[1]||'', plate: plate, electric: isElectric, capacity: parseInt(r[4])||5, permanent: !!(r[5]), assignedTo: r[5]||'', status: (r[6]||'').toLowerCase().includes('permanent') ? 'permanent' : 'available', driver:'', dest:'', eta:'' });
@@ -827,12 +827,14 @@ function moveSelectedTo(targetIdx) {
   renderEditor();
   renderAssignments();
   updateCarStatuses();
+  pushAssignmentsToSheet();
 }
 
 function setDepartTime(idx, val) {
   if (idx >= 0 && idx < currentAssignments.length) {
     currentAssignments[idx].departTime = val;
     renderAssignments();
+    pushAssignmentsToSheet();
   }
 }
 
