@@ -874,7 +874,7 @@ function postToSheet(data) {
   if (!WEBAPP_URL) { console.warn('No Web App URL configured'); return; }
   fetch(WEBAPP_URL, {
     method: 'POST', mode: 'no-cors',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify(data)
   }).then(function() {
     console.log('Posted to sheet:', data.action);
