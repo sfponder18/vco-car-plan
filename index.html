@@ -248,7 +248,7 @@ body::before {
       </div>
       <div class="card-body" style="padding:0;overflow-x:auto;">
         <table class="assign-table">
-          <thead><tr><th>Car</th><th>Driver</th><th>Passengers</th><th>Hotel</th><th>Destination</th><th>Depart</th></tr></thead>
+          <thead><tr><th>Car</th><th>Driver</th><th>Passengers</th><th>Hotel</th><th>Destination</th><th>Depart</th><th>ETA Return</th></tr></thead>
           <tbody id="assignment-body"><tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:40px;">No assignments yet.</td></tr></tbody>
         </table>
       </div>
@@ -733,7 +733,7 @@ function clearAssignments() {
 function renderAssignments() {
   var body = document.getElementById('assignment-body');
   if (!currentAssignments.length) {
-    body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:40px;">No assignments yet.</td></tr>';
+    body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:40px;">No assignments yet.</td></tr>';
     document.getElementById('show-time-display').textContent = '--';
     return;
   }
@@ -747,7 +747,8 @@ function renderAssignments() {
       '<td class="pax-list">'+(a.passengers.length?a.passengers.join('<br>'):'<em style="color:var(--text-dim);">--</em>')+'</td>'+
       '<td><span class="hotel-badge '+hc+'">'+a.hotel+'</span></td>'+
       '<td style="font-weight:700;color:var(--gold-light);font-size:14px;">'+a.destination+'</td>'+
-      '<td style="font-family:JetBrains Mono,monospace;font-weight:600;color:var(--gold-light);">'+a.departTime+'L</td>'+
+      '<td style="font-family:JetBrains Mono,monospace;font-weight:600;color:var(--gold-light);"><input type="text" value="'+a.departTime+'" onchange="setDepartTime('+currentAssignments.indexOf(a)+',this.value)" style="width:60px;background:var(--bg-primary);border:1px solid var(--border);border-radius:4px;color:var(--gold-light);font-family:JetBrains Mono,monospace;font-weight:600;font-size:inherit;padding:2px 4px;text-align:center;">L</td>'+
+      '<td style="font-family:JetBrains Mono,monospace;font-weight:600;color:var(--text-secondary);"><input type="text" value="'+(a.etaReturn||'')+'" onchange="setEtaReturn('+currentAssignments.indexOf(a)+',this.value)" placeholder="--" style="width:60px;background:var(--bg-primary);border:1px solid var(--border);border-radius:4px;color:var(--text-secondary);font-family:JetBrains Mono,monospace;font-weight:600;font-size:inherit;padding:2px 4px;text-align:center;">'+(a.etaReturn?'L':'')+'</td>'+
     '</tr>';
   }).join('');
 }
@@ -833,6 +834,14 @@ function moveSelectedTo(targetIdx) {
 function setDepartTime(idx, val) {
   if (idx >= 0 && idx < currentAssignments.length) {
     currentAssignments[idx].departTime = val;
+    renderAssignments();
+    pushAssignmentsToSheet();
+  }
+}
+
+function setEtaReturn(idx, val) {
+  if (idx >= 0 && idx < currentAssignments.length) {
+    currentAssignments[idx].etaReturn = val;
     renderAssignments();
     pushAssignmentsToSheet();
   }
