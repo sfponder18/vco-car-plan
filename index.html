@@ -1000,6 +1000,7 @@ function deleteSignout(idx) {
     var cs = CARS.find(function(c){return c.name===e.car;});
     if (cs) { cs.status='available'; cs.driver=''; cs.dest=''; cs.eta=''; }
   }
+  postToSheet({ action:'deleteSignout', time:e.time, car:e.car });
   signoutLog.splice(idx, 1);
   renderSignoutLog(); renderCarsOut(); renderFleetGrid('fleet-grid'); renderFleetGrid('all-cars-grid');
 }

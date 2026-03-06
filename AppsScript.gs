@@ -28,6 +28,8 @@ function doPost(e) {
       return returnCarLog(ss, data);
     } else if (action === 'updateRoster') {
       return updateRoster(ss, data);
+    } else if (action === 'deleteSignout') {
+      return deleteSignout(ss, data);
     }
 
     return respond({ success: false, error: 'Unknown action: ' + action });
@@ -214,6 +216,36 @@ function updateRoster(ss, data) {
     if (!name) continue;
     var isPresent = present.indexOf(name) >= 0;
     sheet.getRange(row, 4).setValue(isPresent ? 'Yes' : 'No');
+  }
+
+  return respond({ success: true });
+}
+
+// Delete a sign-out log entry
+function deleteSignout(ss, data) {
+  var sheet = ss.getSheetByName('Availability');
+  if (!sheet) return respond({ success: false, error: 'Availability tab not found' });
+
+  var logStart = 21;
+  for (var row = logStart; row <= 50; row++) {
+    var time = sheet.getRange(row, 1).getValue();
+    var car = sheet.getRange(row, 2).getValue();
+    if (time.toString() === data.time && car === data.car) {
+      // Clear the row
+      sheet.getRange(row, 1, 1, 7).clearContent();
+      // Update car status to available if it was committed
+      for (var r = 5; r <= 17; r++) {
+        var name = sheet.getRange(r, 2).getValue();
+        if (name === data.car) {
+          sheet.getRange(r, 3).setValue('Available');
+          sheet.getRange(r, 4).setValue('');
+          sheet.getRange(r, 5).setValue('');
+          sheet.getRange(r, 6).setValue('');
+          break;
+        }
+      }
+      break;
+    }
   }
 
   return respond({ success: true });
