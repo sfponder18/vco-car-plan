@@ -253,6 +253,18 @@ body::before {
         </table>
       </div>
     </div>
+    <div class="card">
+      <div class="card-header">
+        <h2>Cars Out</h2>
+        <span id="cars-out-count" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-secondary);">0 out</span>
+      </div>
+      <div class="card-body" style="padding:0;overflow-x:auto;">
+        <table class="assign-table">
+          <thead><tr><th>Car</th><th>Driver</th><th>Destination</th><th>Time Out</th><th>ETA Back</th><th>Status</th></tr></thead>
+          <tbody id="cars-out-body"><tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:20px;">No cars currently out</td></tr></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <!-- FLEET (everyone) -->
@@ -506,6 +518,7 @@ function renderAll() {
   populateCarSelect();
   if (isVCO) { renderSectionFilters(); renderRoster(); updateHotelSummary(); if (currentAssignments.length) renderEditor(); }
   renderAssignments();
+  renderCarsOut();
   renderSignoutLog();
 }
 
@@ -914,8 +927,15 @@ function populateCarSelect() {
 function addSignout() {
   var time=document.getElementById('so-time').value, car=document.getElementById('so-car').value, driver=document.getElementById('so-driver').value, dest=document.getElementById('so-dest').value, eta=document.getElementById('so-eta').value;
   if (!time||!car||!driver) return;
+  // Block sign-out if car is assigned in the morning push
+  var inPush = currentAssignments.find(function(a){return a.car===car;});
+  if (inPush) {
+    alert(car + ' is assigned in the morning push (depart ' + inPush.departTime + 'L). Return it before the push or remove it from assignments first.');
+    return;
+  }
   signoutLog.push({time:time,car:car,driver:driver,dest:dest,eta:eta,timeIn:''});
   renderSignoutLog();
+  renderCarsOut();
   var cs=CARS.find(function(c){return c.name===car;});
   if(cs){cs.status='committed';cs.driver=driver;cs.dest=dest;cs.eta=eta;}
   renderFleetGrid('fleet-grid'); renderFleetGrid('all-cars-grid');
@@ -928,8 +948,39 @@ function returnCar(idx) {
   e.timeIn=String(now.getHours()).padStart(2,'0')+String(now.getMinutes()).padStart(2,'0');
   var cs=CARS.find(function(c){return c.name===e.car;});
   if(cs){cs.status='available';cs.driver='';cs.dest='';cs.eta='';}
-  renderSignoutLog(); renderFleetGrid('fleet-grid'); renderFleetGrid('all-cars-grid');
+  renderSignoutLog(); renderCarsOut(); renderFleetGrid('fleet-grid'); renderFleetGrid('all-cars-grid');
   postToSheet({ action:'returnCar', time:e.time, car:e.car, timeIn:e.timeIn });
+}
+
+function renderCarsOut() {
+  var body = document.getElementById('cars-out-body');
+  var active = signoutLog.filter(function(s){return !s.timeIn;});
+  document.getElementById('cars-out-count').textContent = active.length + ' out';
+  if (!active.length) {
+    body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:20px;">No cars currently out</td></tr>';
+    return;
+  }
+  body.innerHTML = active.map(function(s) {
+    var now = new Date();
+    var nowMins = now.getHours()*60 + now.getMinutes();
+    var etaMins = s.eta ? parseInt(s.eta.substring(0,2))*60 + parseInt(s.eta.substring(2,4)) : null;
+    var status = '';
+    if (etaMins !== null && nowMins > etaMins) {
+      status = '<span style="color:var(--red);font-weight:600;">OVERDUE</span>';
+    } else if (etaMins !== null && nowMins > etaMins - 15) {
+      status = '<span style="color:var(--amber);font-weight:600;">Due Soon</span>';
+    } else {
+      status = '<span style="color:var(--gold);font-weight:600;">Out</span>';
+    }
+    return '<tr>'+
+      '<td><strong>'+s.car+'</strong></td>'+
+      '<td>'+s.driver+'</td>'+
+      '<td>'+s.dest+'</td>'+
+      '<td style="font-family:JetBrains Mono,monospace;color:var(--gold);font-weight:600;">'+s.time+'L</td>'+
+      '<td style="font-family:JetBrains Mono,monospace;">'+(s.eta?s.eta+'L':'--')+'</td>'+
+      '<td>'+status+'</td>'+
+    '</tr>';
+  }).join('');
 }
 
 function renderSignoutLog() {
