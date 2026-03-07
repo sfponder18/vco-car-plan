@@ -147,9 +147,11 @@ body::before {
 .roster-item { display:flex; align-items:center; gap:10px; padding:6px 10px; border-radius:4px; transition:background 0.2s; }
 .roster-item:hover { background:var(--bg-card-hover); }
 .roster-item input[type="checkbox"] { width:16px; height:16px; accent-color:var(--gold); }
+.roster-item input[type="checkbox"].ride-check { accent-color:var(--green); }
 .roster-item .name { font-size:13px; font-weight:500; flex:1; }
 .roster-item .section-tag { font-size:10px; padding:1px 6px; border-radius:3px; background:var(--gold-dim); color:var(--gold); font-weight:600; }
 .roster-item .fueler-tag { font-size:10px; padding:1px 6px; border-radius:3px; background:rgba(16,185,129,0.15); color:var(--green); font-weight:600; }
+.roster-item .ride-tag { font-size:10px; padding:1px 6px; border-radius:3px; background:rgba(139,92,246,0.15); color:var(--purple); font-weight:600; }
 
 .hotel-summary { display:flex; gap:16px; margin:16px 0; flex-wrap:wrap; }
 .hotel-count { padding:10px 20px; border-radius:6px; font-family:'JetBrains Mono',monospace; font-weight:700; font-size:14px; }
@@ -340,6 +342,10 @@ body::before {
       <div class="card-body">
         <div style="margin-bottom:12px;display:flex;gap:6px;flex-wrap:wrap;" id="section-filters"></div>
         <div class="hotel-summary" id="hotel-summary"></div>
+        <div style="display:flex;gap:16px;align-items:center;margin-bottom:8px;font-size:11px;color:var(--text-secondary);font-family:'JetBrains Mono',monospace;letter-spacing:1px;">
+          <span><input type="checkbox" checked disabled style="width:14px;height:14px;accent-color:var(--gold);vertical-align:middle;"> PRESENT</span>
+          <span><input type="checkbox" class="ride-check" checked disabled style="width:14px;height:14px;accent-color:var(--green);vertical-align:middle;"> NEEDS RIDE</span>
+        </div>
         <div class="roster-grid" id="roster-grid"><div class="loading"><div class="spinner"></div><br>Loading roster...</div></div>
       </div>
     </div>
@@ -431,6 +437,7 @@ var presentPersonnel = new Set();
 var currentAssignments = []; // [{car, plate, electric, driver, driverFueler, passengers:[], hotel, destination, departTime}]
 var signoutLog = [];
 var dataLoaded = false;
+var rideAvailable = new Set(); // indices of personnel available for rides from hotel
 var rosterEditedLocally = false;
 var selectedPerson = null; // name of person being moved
 var fleetShowAll = false;
@@ -699,26 +706,31 @@ function renderRoster() {
     var hc = hotel==='Flexbase'?'flexbase':hotel==='Kysthotell'?'kysthotell':'fosen';
     html += '<div style="grid-column:1/-1;margin-top:12px;margin-bottom:4px;"><span class="hotel-badge '+hc+'">'+hotel+' ('+people.length+')</span></div>';
     people.forEach(function(p) {
-      html += '<div class="roster-item"><input type="checkbox" '+(presentPersonnel.has(p.idx)?'checked':'')+' onchange="togglePresent('+p.idx+',this.checked)"><span class="name">'+p.name+'</span><span class="section-tag">'+p.section+'</span>'+(p.fueler?'<span class="fueler-tag">FUELER</span>':'')+'</div>';
+      html += '<div class="roster-item"><input type="checkbox" '+(presentPersonnel.has(p.idx)?'checked':'')+' onchange="togglePresent('+p.idx+',this.checked)" title="Present"><input type="checkbox" class="ride-check" '+(rideAvailable.has(p.idx)?'checked':'')+' onchange="toggleRide('+p.idx+',this.checked)" title="Needs ride from hotel"><span class="name">'+p.name+'</span><span class="section-tag">'+p.section+'</span>'+(p.fueler?'<span class="fueler-tag">FUELER</span>':'')+(rideAvailable.has(p.idx)?'<span class="ride-tag">RIDE</span>':'')+'</div>';
     });
   });
   grid.innerHTML = html;
   updateSectionBtnStates();
 }
 
-function togglePresent(idx,checked) { rosterEditedLocally=true; if(checked) presentPersonnel.add(idx); else presentPersonnel.delete(idx); updateHotelSummary(); updateSectionBtnStates(); }
-function selectAll(val) { rosterEditedLocally=true; if(val) PERSONNEL.forEach(function(_,i){presentPersonnel.add(i);}); else presentPersonnel.clear(); renderRoster(); updateHotelSummary(); }
+function togglePresent(idx,checked) { rosterEditedLocally=true; if(checked) presentPersonnel.add(idx); else { presentPersonnel.delete(idx); rideAvailable.delete(idx); } updateHotelSummary(); updateSectionBtnStates(); renderRoster(); }
+function toggleRide(idx,checked) { if(checked) { rideAvailable.add(idx); if(!presentPersonnel.has(idx)){presentPersonnel.add(idx);rosterEditedLocally=true;} } else { rideAvailable.delete(idx); } updateHotelSummary(); renderRoster(); }
+function selectAll(val) { rosterEditedLocally=true; if(val) PERSONNEL.forEach(function(_,i){presentPersonnel.add(i);}); else { presentPersonnel.clear(); rideAvailable.clear(); } renderRoster(); updateHotelSummary(); }
 
 function updateHotelSummary() {
   var c = {'Flexbase':0,'Kysthotell':0,'Fosen Fjord':0};
+  var r = {'Flexbase':0,'Kysthotell':0,'Fosen Fjord':0};
   presentPersonnel.forEach(function(i){c[PERSONNEL[i].hotel]=(c[PERSONNEL[i].hotel]||0)+1;});
+  rideAvailable.forEach(function(i){r[PERSONNEL[i].hotel]=(r[PERSONNEL[i].hotel]||0)+1;});
   var t = presentPersonnel.size;
+  var tr = rideAvailable.size;
   document.getElementById('pax-count').textContent = t;
+  function rideLabel(hotel) { return r[hotel] ? '<span class="label" style="color:var(--purple);margin-top:2px;">'+r[hotel]+' need ride</span>' : ''; }
   document.getElementById('hotel-summary').innerHTML =
-    '<div class="hotel-count flexbase"><span class="count">'+(c['Flexbase']||0)+'</span><span class="label">FLEXBASE</span></div>'+
-    '<div class="hotel-count kysthotell"><span class="count">'+(c['Kysthotell']||0)+'</span><span class="label">KYSTHOTELL</span></div>'+
-    '<div class="hotel-count fosen"><span class="count">'+(c['Fosen Fjord']||0)+'</span><span class="label">FOSEN FJORD</span></div>'+
-    '<div class="hotel-count" style="background:rgba(212,160,23,0.1);border:1px solid rgba(212,160,23,0.3);color:var(--gold);"><span class="count">'+t+'</span><span class="label">TOTAL</span></div>';
+    '<div class="hotel-count flexbase"><span class="count">'+(c['Flexbase']||0)+'</span><span class="label">FLEXBASE</span>'+rideLabel('Flexbase')+'</div>'+
+    '<div class="hotel-count kysthotell"><span class="count">'+(c['Kysthotell']||0)+'</span><span class="label">KYSTHOTELL</span>'+rideLabel('Kysthotell')+'</div>'+
+    '<div class="hotel-count fosen"><span class="count">'+(c['Fosen Fjord']||0)+'</span><span class="label">FOSEN FJORD</span>'+rideLabel('Fosen Fjord')+'</div>'+
+    '<div class="hotel-count" style="background:rgba(212,160,23,0.1);border:1px solid rgba(212,160,23,0.3);color:var(--gold);"><span class="count">'+t+'</span><span class="label">TOTAL</span>'+(tr?'<span class="label" style="color:var(--purple);margin-top:2px;">'+tr+' need ride</span>':'')+'</div>';
 }
 
 // ============================================================
@@ -875,10 +887,15 @@ function renderAssignments() {
     var carDN = carDisplayNameByName(a.car);
     var akaLine = (isPilot && carDN !== a.car) ? '<br><span style="color:var(--text-dim);font-size:10px;">AKA '+a.car+'</span>' : '';
     var driverDN = personDisplayName(a.driver);
-    var paxDN = a.passengers.map(function(n){return personDisplayName(n);});
+    var driverNeedsRide = (function(){ var pi=PERSONNEL.findIndex(function(p){return p.name===a.driver;}); return pi>=0&&rideAvailable.has(pi); })();
+    var paxDN = a.passengers.map(function(n){
+      var pi=PERSONNEL.findIndex(function(p){return p.name===n;});
+      var needsRide = pi>=0&&rideAvailable.has(pi);
+      return personDisplayName(n)+(needsRide?' <span style="color:var(--purple);font-size:10px;font-weight:600;">RIDE</span>':'');
+    });
     return '<tr>'+
       '<td><strong>'+carDN+'</strong>'+akaLine+ev+'<br><span style="color:var(--text-dim);font-size:11px;">'+a.plate+'</span></td>'+
-      '<td><span class="driver-name">'+driverDN+'</span>'+(a.driverFueler?' <span style="color:var(--green);font-size:10px;">F</span>':'')+'</td>'+
+      '<td><span class="driver-name">'+driverDN+'</span>'+(a.driverFueler?' <span style="color:var(--green);font-size:10px;">F</span>':'')+(driverNeedsRide?' <span style="color:var(--purple);font-size:10px;font-weight:600;">RIDE</span>':'')+'</td>'+
       '<td class="pax-list">'+(paxDN.length?paxDN.join('<br>'):'<em style="color:var(--text-dim);">--</em>')+'</td>'+
       '<td><span class="hotel-badge '+hc+'">'+a.hotel+'</span></td>'+
       '<td style="font-weight:700;color:var(--gold-light);font-size:14px;">'+a.destination+'</td>'+
