@@ -574,7 +574,7 @@ function loadAllData() {
       if (!r || !r[0] || !r[0].match(/^Car \d/)) continue;
       var plate = r[2]||'';
       var isElectric = plate.toUpperCase().startsWith('E');
-      CARS.push({ num: parseInt(r[0].replace('Car ','')), name: r[1]||'', pilotName: r[9]||'', icon: r[10]||'', plate: plate, electric: isElectric, capacity: parseInt(r[4])||5, permanent: !!(r[5]), assignedTo: r[5]||'', status: (r[6]||'').toLowerCase().includes('permanent') ? 'permanent' : 'available', location: r[8]||'', driver:'', dest:'', eta:'' });
+      CARS.push({ num: parseInt(r[0].replace('Car ','')), name: r[1]||'', pilotName: (r[8]||'').trim(), icon: (r[9]||'').trim(), plate: plate, electric: isElectric, capacity: parseInt(r[4])||5, permanent: !!(r[5]), assignedTo: r[5]||'', status: (r[6]||'').toLowerCase().includes('permanent') ? 'permanent' : 'available', location: r[8]||'', driver:'', dest:'', eta:'' });
     }
 
     // Availability tab status is only used for sign-out log driven statuses
