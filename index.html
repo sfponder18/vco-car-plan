@@ -557,7 +557,7 @@ function fetchSheet(range) {
 
 function loadAllData() {
   return Promise.all([
-    fetchSheet('Config!A3:J23'),
+    fetchSheet('Config!A3:M23'),
     fetchSheet('Roster!A4:F60'),
     fetchSheet('Config!B27:C52'),
     fetchSheet('Availability!A4:G17'),
@@ -574,7 +574,7 @@ function loadAllData() {
       if (!r || !r[0] || !r[0].match(/^Car \d/)) continue;
       var plate = r[2]||'';
       var isElectric = plate.toUpperCase().startsWith('E');
-      CARS.push({ num: parseInt(r[0].replace('Car ','')), name: r[1]||'', pilotName: (r[8]||'').trim(), icon: (r[9]||'').trim(), plate: plate, electric: isElectric, capacity: parseInt(r[4])||5, permanent: !!(r[5]), assignedTo: r[5]||'', status: (r[6]||'').toLowerCase().includes('permanent') ? 'permanent' : 'available', driver:'', dest:'', eta:'' });
+      CARS.push({ num: parseInt(r[0].replace('Car ','')), name: r[1]||'', pilotName: (r[8]||'').trim(), icon: (r[9]||'').trim(), plate: plate, electric: isElectric, capacity: parseInt(r[4])||5, permanent: !!(r[5]), assignedTo: r[5]||'', status: (r[6]||'').toLowerCase().includes('permanent') ? 'permanent' : 'available', color: (r[10]||'').trim(), make: (r[11]||'').trim(), model: (r[12]||'').trim(), driver:'', dest:'', eta:'' });
     }
 
     // Availability tab status is only used for sign-out log driven statuses
@@ -812,7 +812,7 @@ function autoAssign() {
     if (driverName) {
       var dp = PERSONNEL.find(function(p){return p.name===driverName;});
       currentAssignments.push({
-        car: car.name, plate: car.plate, electric: car.electric,
+        car: car.name, plate: car.plate, electric: car.electric, color: car.color, make: car.make, model: car.model,
         driver: driverName, driverFueler: dp ? dp.fueler : false,
         passengers: [], hotel: dp ? dp.hotel : '', destination: destination, departTime: '0500'
       });
@@ -861,7 +861,7 @@ function autoAssign() {
       else { driver = load.shift(); }
 
       currentAssignments.push({
-        car: car.name, plate: car.plate, electric: car.electric,
+        car: car.name, plate: car.plate, electric: car.electric, color: car.color, make: car.make, model: car.model,
         driver: driver.name, driverFueler: driver.fueler,
         passengers: load.map(function(p){return p.name;}),
         hotel: hotel, destination: destination, departTime: '0500'
@@ -1511,19 +1511,22 @@ function exportPDF() {
     var group = hotelGroups[hotel];
     if (!group || !group.length) return;
     hotelRowIndices.push(tableBody.length);
-    tableBody.push([{ content: hotel.toUpperCase() + ' (' + group.length + ' cars)', colSpan: 8, styles: { fillColor: LIGHT_GREEN, textColor: GREEN_HDR, fontStyle: 'bold', fontSize: 8 } }]);
+    tableBody.push([{ content: hotel.toUpperCase() + ' (' + group.length + ' cars)', colSpan: 11, styles: { fillColor: LIGHT_GREEN, textColor: GREEN_HDR, fontStyle: 'bold', fontSize: 8 } }]);
     group.forEach(function(a) {
       var paxNames = a.passengers.map(function(n) { return n; }).join(', ');
       var ev = a.electric ? ' (EV)' : '';
       tableBody.push([
         a.car,
+        (a.color || ''),
+        (a.make || '') + ' ' + (a.model || ''),
         a.plate + ev,
         a.driver + (a.driverFueler ? ' [F]' : ''),
         paxNames || '--',
         hotel,
         a.destination,
         a.departTime + 'L',
-        a.etaReturn ? a.etaReturn + 'L' : '--'
+        a.etaReturn ? a.etaReturn + 'L' : '--',
+        (1 + a.passengers.length) + '/5'
       ]);
     });
   });
@@ -1531,7 +1534,7 @@ function exportPDF() {
   doc.autoTable({
     startY: 34,
     margin: { left: 5, right: 5 },
-    head: [['Car', 'Plate', 'Driver', 'Passengers', 'Hotel', 'Destination', 'Depart', 'ETA Return']],
+    head: [['Car', 'Color', 'Make/Model', 'Plate', 'Driver', 'Passengers', 'Hotel', 'Destination', 'Depart', 'ETA Return', 'Pax']],
     body: tableBody,
     theme: 'grid',
     headStyles: {
@@ -1553,14 +1556,17 @@ function exportPDF() {
       fillColor: LIGHT_ROW
     },
     columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 25 },
-      1: { cellWidth: 25 },
-      2: { cellWidth: 35 },
-      3: { cellWidth: 55 },
-      4: { cellWidth: 22 },
-      5: { cellWidth: 30 },
-      6: { cellWidth: 20, halign: 'center' },
-      7: { cellWidth: 20, halign: 'center' }
+      0: { fontStyle: 'bold', cellWidth: 22 },
+      1: { cellWidth: 18 },
+      2: { cellWidth: 28 },
+      3: { cellWidth: 22 },
+      4: { cellWidth: 32 },
+      5: { cellWidth: 48 },
+      6: { cellWidth: 20 },
+      7: { cellWidth: 25 },
+      8: { cellWidth: 16, halign: 'center' },
+      9: { cellWidth: 18, halign: 'center' },
+      10: { cellWidth: 12, halign: 'center' }
     },
     didParseCell: function(data) {
       // Style hotel header rows
