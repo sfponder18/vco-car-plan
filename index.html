@@ -70,6 +70,21 @@ body::before {
 .tab-content { display:none; }
 .tab-content.active { display:block; }
 
+/* DAY SELECTOR */
+.day-selector { display:flex; align-items:center; gap:8px; margin-bottom:16px; padding:10px 12px; background:var(--bg-card); border:1px solid var(--border); border-radius:8px; }
+.day-selector-label { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600; color:var(--text-secondary); letter-spacing:1px; text-transform:uppercase; margin-right:4px; white-space:nowrap; }
+.day-selector-nav { background:var(--bg-primary); border:1px solid var(--border); border-radius:4px; color:var(--text-secondary); font-size:16px; width:28px; height:28px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+.day-selector-nav:hover { border-color:var(--gold); color:var(--gold); }
+.day-selector-days { display:flex; gap:4px; flex:1; justify-content:center; }
+.day-btn { padding:6px 12px; background:var(--bg-primary); border:1px solid var(--border); border-radius:6px; color:var(--text-secondary); font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; cursor:pointer; transition:all 0.2s; text-align:center; min-width:60px; }
+.day-btn:hover { border-color:var(--border-bright); color:var(--text-primary); }
+.day-btn.selected { background:var(--gold); color:#000; border-color:var(--gold); }
+.day-btn.today { box-shadow:inset 0 -2px 0 var(--gold); }
+.day-btn .day-name { display:block; font-size:10px; font-weight:700; letter-spacing:1px; }
+.day-btn .day-num { display:block; font-size:14px; font-weight:700; margin-top:1px; }
+.day-btn.selected .day-name, .day-btn.selected .day-num { color:#000; }
+.day-selected-display { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--gold-light); font-weight:600; letter-spacing:1px; white-space:nowrap; margin-left:8px; }
+
 /* CARDS */
 .card { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; overflow:hidden; margin-bottom:16px; }
 .card-header { padding:10px 16px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
@@ -192,6 +207,11 @@ body::before {
   .signout-form { grid-template-columns:1fr 1fr; }
   .header { flex-direction:column; gap:8px; }
   .tab-bar { flex-wrap:wrap; }
+  .day-selector { flex-wrap:wrap; }
+  .day-selector-days { gap:3px; }
+  .day-btn { padding:4px 8px; min-width:42px; }
+  .day-btn .day-num { font-size:12px; }
+  .day-selected-display { display:none; }
 }
 </style>
 </head>
@@ -230,12 +250,23 @@ body::before {
     <button class="tab-btn vco-only" onclick="switchTab('settings')" style="display:none;">Settings</button>
   </div>
 
+  <div class="day-selector" id="day-selector">
+    <span class="day-selector-label">Viewing:</span>
+    <button class="day-selector-nav" onclick="shiftWeek(-7)" title="Previous week">&#9664;</button>
+    <div class="day-selector-days" id="day-selector-days"></div>
+    <button class="day-selector-nav" onclick="shiftWeek(7)" title="Next week">&#9654;</button>
+    <span class="day-selected-display" id="day-selected-display">--</span>
+  </div>
+
   <!-- DASHBOARD (everyone) -->
   <div class="tab-content active" id="tab-dashboard">
     <div class="card">
       <div class="card-header">
         <h2>Morning Push</h2>
-        <span id="show-time-display" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold-light);">--</span>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span id="assignment-date-display" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-secondary);"></span>
+          <span id="show-time-display" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold-light);">--</span>
+        </div>
       </div>
       <div class="card-body" style="padding:0;overflow-x:auto;">
         <table class="assign-table">
@@ -403,6 +434,9 @@ var dataLoaded = false;
 var rosterEditedLocally = false;
 var selectedPerson = null; // name of person being moved
 var fleetShowAll = false;
+var selectedDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+var weekStartOffset = 0; // offset in days from current week's Monday
+var savedAssignmentDate = ''; // date from Daily Schedule B2
 
 // ============================================================
 // PILOT VIEW HELPERS
@@ -486,7 +520,7 @@ function loadAllData() {
     fetchSheet('Config!B27:C52'),
     fetchSheet('Availability!A4:G17'),
     fetchSheet('Availability!A20:G40'),
-    fetchSheet('Daily Schedule!B3'),
+    fetchSheet('Daily Schedule!B2:B3'),
   ]).then(function(results) {
     var configRows = results[0], rosterRows = results[1], callsignRows = results[2], availRows = results[3], signoutRows = results[4], schedRows = results[5];
 
@@ -534,10 +568,13 @@ function loadAllData() {
       }
     }
 
-    // Load saved assignments from Daily Schedule B3
+    // Load saved date from Daily Schedule B2 and assignments from B3
     if (schedRows.length && schedRows[0][0]) {
+      savedAssignmentDate = schedRows[0][0];
+    }
+    if (schedRows.length > 1 && schedRows[1][0]) {
       try {
-        var saved = JSON.parse(schedRows[0][0]);
+        var saved = JSON.parse(schedRows[1][0]);
         if (Array.isArray(saved) && saved.length) currentAssignments = saved;
       } catch(e) { /* no saved assignments */ }
     }
@@ -820,6 +857,12 @@ function clearAssignments() {
 // ============================================================
 function renderAssignments() {
   var body = document.getElementById('assignment-body');
+  var dateEl = document.getElementById('assignment-date-display');
+  if (savedAssignmentDate) {
+    dateEl.textContent = savedAssignmentDate;
+  } else {
+    dateEl.textContent = '';
+  }
   if (!currentAssignments.length) {
     body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-dim);padding:40px;">No assignments yet.</td></tr>';
     document.getElementById('show-time-display').textContent = '--';
@@ -1209,6 +1252,59 @@ function pushAssignmentsToSheet() {
 }
 
 // ============================================================
+// DAY SELECTOR
+// ============================================================
+function getMonday(d) {
+  var dt = new Date(d);
+  var day = dt.getDay();
+  var diff = dt.getDate() - day + (day === 0 ? -6 : 1);
+  dt.setDate(diff);
+  return dt;
+}
+
+function renderDaySelector() {
+  var today = new Date();
+  today.setHours(0,0,0,0);
+  var monday = getMonday(today);
+  monday.setDate(monday.getDate() + weekStartOffset);
+  var container = document.getElementById('day-selector-days');
+  var dayNames = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+  var html = '';
+  for (var i = 0; i < 7; i++) {
+    var d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    var dateStr = d.toISOString().split('T')[0];
+    var isSelected = dateStr === selectedDate;
+    var isToday = d.getTime() === today.getTime();
+    var cls = 'day-btn' + (isSelected ? ' selected' : '') + (isToday ? ' today' : '');
+    html += '<button class="' + cls + '" onclick="selectDay(\'' + dateStr + '\')">' +
+      '<span class="day-name">' + dayNames[i] + '</span>' +
+      '<span class="day-num">' + d.getDate() + '</span>' +
+    '</button>';
+  }
+  container.innerHTML = html;
+  updateDayDisplay();
+}
+
+function selectDay(dateStr) {
+  selectedDate = dateStr;
+  document.getElementById('vco-date').value = dateStr;
+  renderDaySelector();
+}
+
+function shiftWeek(days) {
+  weekStartOffset += days;
+  renderDaySelector();
+}
+
+function updateDayDisplay() {
+  var parts = selectedDate.split('-');
+  var d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+  var label = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }).toUpperCase();
+  document.getElementById('day-selected-display').textContent = label;
+}
+
+// ============================================================
 // CLOCK & TABS
 // ============================================================
 function updateClock() {
@@ -1226,8 +1322,13 @@ function switchTab(tab) {
 }
 
 function initApp() {
-  document.getElementById('vco-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('vco-date').value = selectedDate;
+  document.getElementById('vco-date').addEventListener('change', function() {
+    selectedDate = this.value;
+    renderDaySelector();
+  });
   if (WEBAPP_URL) document.getElementById('cfg-webapp-url').value = WEBAPP_URL;
+  renderDaySelector();
   updateClock(); setInterval(updateClock, 1000);
   loadAllData(); setInterval(loadAllData, REFRESH_SEC * 1000);
 }
