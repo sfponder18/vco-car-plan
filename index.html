@@ -640,7 +640,8 @@ function renderFleetGrid(id) {
     var dn = carDisplayName(car);
     var ev = car.electric ? ' <span class="electric">EV</span>' : '';
     var sl = car.permanent ? 'PERMANENT' : car.status==='available' ? 'AVAILABLE' : car.status==='committed' ? 'COMMITTED' : 'RETURNING';
-    var iconHtml = (isPilot && car.icon) ? '<img src="'+car.icon+'" alt="" style="width:48px;height:48px;object-fit:contain;margin:4px auto;display:block;">' : '';
+    var iconSrc = car.icon && car.icon.startsWith('http') ? car.icon : 'img/'+car.icon;
+    var iconHtml = (isPilot && car.icon) ? '<img src="'+iconSrc+'" alt="" style="width:48px;height:48px;object-fit:contain;margin:4px auto;display:block;">' : '';
     var akaHtml = (isPilot && car.pilotName && car.name !== car.pilotName) ? '<div style="font-size:10px;color:var(--text-dim);margin-top:2px;">AKA '+car.name+'</div>' : '';
     var driverDisplay = car.driver ? personDisplayName(car.driver) : car.assignedTo;
     return '<div class="car-card '+car.status+'">'+iconHtml+'<div class="car-card-name">'+dn+'</div>'+akaHtml+'<div class="car-card-plate">'+car.plate+ev+'</div><div class="car-status-badge">'+sl+'</div>'+(driverDisplay?'<div class="car-card-detail"><strong>'+driverDisplay+'</strong>'+(car.dest?'<br>'+car.dest:'')+(car.eta?'<br>ETA: '+car.eta:'')+'</div>':'')+'</div>';
