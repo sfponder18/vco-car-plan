@@ -776,7 +776,7 @@ function autoAssign() {
   });
 
   var availCars = CARS.filter(function(c){return !c.permanent;});
-  var carIdx = 0;
+  var usedCars = {};
   currentAssignments = [];
 
   // Assign permanent cars first if their drivers are present
@@ -801,53 +801,85 @@ function autoAssign() {
     }
   });
 
+  // Pick next available car, preferring cars at the matching hotel
+  function pickCar(hotel) {
+    // First try cars at the same hotel
+    for (var i = 0; i < availCars.length; i++) {
+      if (!usedCars[availCars[i].name] && availCars[i].location === hotel) return availCars[i];
+    }
+    // Fall back to any available car
+    for (var i = 0; i < availCars.length; i++) {
+      if (!usedCars[availCars[i].name]) return availCars[i];
+    }
+    return null;
+  }
+
+  function assignGroup(group, hotel) {
+    if (!group.length) return;
+    var carsRemaining = availCars.filter(function(c){return !usedCars[c.name];}).length;
+    var carsAt4 = Math.ceil(group.length / 4);
+    var carsAt5 = Math.ceil(group.length / 5);
+    var carsNeeded = carsAt4 <= carsRemaining ? carsAt4 : carsAt5;
+    if (carsNeeded > carsRemaining) carsNeeded = carsRemaining;
+    if (carsNeeded <= 0) return;
+
+    var carLoads = [];
+    for (var c = 0; c < carsNeeded; c++) carLoads.push([]);
+    var fuelers = group.filter(function(p){return p.fueler;});
+    var nonFuelers = group.filter(function(p){return !p.fueler;});
+    var ordered = fuelers.concat(nonFuelers);
+    for (var p = 0; p < ordered.length; p++) {
+      carLoads[p % carsNeeded].push(ordered[p]);
+    }
+
+    for (var c = 0; c < carsNeeded; c++) {
+      var load = carLoads[c];
+      if (!load.length) continue;
+      var car = pickCar(hotel);
+      if (!car) continue;
+      usedCars[car.name] = true;
+      var driverIdx = -1;
+      for (var d = 0; d < load.length; d++) { if (load[d].fueler) { driverIdx = d; break; } }
+      var driver;
+      if (driverIdx >= 0) { driver = load.splice(driverIdx, 1)[0]; }
+      else { driver = load.shift(); }
+
+      currentAssignments.push({
+        car: car.name, plate: car.plate, electric: car.electric,
+        driver: driver.name, driverFueler: driver.fueler,
+        passengers: load.map(function(p){return p.name;}),
+        hotel: hotel, destination: destination, departTime: '0500'
+      });
+    }
+  }
+
   ['Flexbase','Kysthotell','Fosen Fjord'].forEach(function(hotel) {
     var people = hotelGroups[hotel] || [];
     if (!people.length) return;
-    var pilots = people.filter(function(p){return p.section==='Pilots';});
-    var support = people.filter(function(p){return p.section!=='Pilots';});
 
-    [pilots, support].forEach(function(group) {
-      if (!group.length) return;
-      // Prefer 4 per car; only use 5 if we'd run out of cars
-      var carsAt4 = Math.ceil(group.length / 4);
-      var carsAt5 = Math.ceil(group.length / 5);
-      var carsRemaining = availCars.length - carIdx;
-      var carsNeeded = carsAt4 <= carsRemaining ? carsAt4 : carsAt5;
-      if (carsNeeded > carsRemaining) carsNeeded = carsRemaining;
-      if (carsNeeded <= 0) return;
+    // Group by section, keeping similar jobs together
+    var sectionMap = {};
+    people.forEach(function(p) {
+      if (!sectionMap[p.section]) sectionMap[p.section] = [];
+      sectionMap[p.section].push(p);
+    });
 
-      // Even spread: distribute people across carsNeeded cars
-      var carLoads = [];
-      for (var c = 0; c < carsNeeded; c++) carLoads.push([]);
-      // Put fuelers first so they become drivers
-      var fuelers = group.filter(function(p){return p.fueler;});
-      var nonFuelers = group.filter(function(p){return !p.fueler;});
-      var ordered = fuelers.concat(nonFuelers);
-      for (var p = 0; p < ordered.length; p++) {
-        carLoads[p % carsNeeded].push(ordered[p]);
-      }
-
-      for (var c = 0; c < carsNeeded; c++) {
-        var load = carLoads[c];
-        if (!load.length) continue;
-        var car = availCars[carIdx];
-        // First fueler in the load is the driver
-        var driverIdx = -1;
-        for (var d = 0; d < load.length; d++) { if (load[d].fueler) { driverIdx = d; break; } }
-        var driver;
-        if (driverIdx >= 0) { driver = load.splice(driverIdx, 1)[0]; }
-        else { driver = load.shift(); }
-
-        currentAssignments.push({
-          car: car.name, plate: car.plate, electric: car.electric,
-          driver: driver.name, driverFueler: driver.fueler,
-          passengers: load.map(function(p){return p.name;}),
-          hotel: hotel, destination: destination, departTime: '0500'
-        });
-        carIdx++;
+    // Assign large sections (4+) to their own cars first
+    var overflow = [];
+    Object.keys(sectionMap).forEach(function(sec) {
+      var group = sectionMap[sec];
+      if (group.length >= 4) {
+        assignGroup(group, hotel);
+      } else {
+        overflow = overflow.concat(group);
       }
     });
+
+    // Merge small sections together, sorted by section name so similar jobs stay adjacent
+    if (overflow.length) {
+      overflow.sort(function(a,b) { return a.section < b.section ? -1 : a.section > b.section ? 1 : 0; });
+      assignGroup(overflow, hotel);
+    }
   });
 
   renderAssignments();
@@ -947,21 +979,31 @@ function renderEditor() {
   });
 
   var html = currentAssignments.map(function(a, idx) {
+    var carObj = CARS.find(function(c){return c.name===a.car;});
+    var carLoc = carObj ? carObj.location : '';
     var paxHtml = '';
+    var hasMismatch = false;
     // Driver chip
-    var dClass = 'person-chip driver ' + (PERSONNEL.find(function(p){return p.name===a.driver;})&&PERSONNEL.find(function(p){return p.name===a.driver;}).section==='Pilots' ? 'pilot' : 'support');
+    var dp = PERSONNEL.find(function(p){return p.name===a.driver;});
+    var dMismatch = dp && carLoc && dp.hotel && dp.hotel !== carLoc;
+    if (dMismatch) hasMismatch = true;
+    var dClass = 'person-chip driver ' + (dp && dp.section==='Pilots' ? 'pilot' : 'support');
     if (selectedPerson === a.driver) dClass += ' selected';
-    paxHtml += '<span class="'+dClass+'" onclick="selectPerson(\''+esc(a.driver)+'\')">'+a.driver+' (D)</span>';
+    paxHtml += '<span class="'+dClass+'" onclick="selectPerson(\''+esc(a.driver)+'\')">'+(dMismatch?'⚠ ':'')+a.driver+' (D)</span>';
     // Passenger chips
     a.passengers.forEach(function(name) {
       var p = PERSONNEL.find(function(p){return p.name===name;});
+      var pMismatch = p && carLoc && p.hotel && p.hotel !== carLoc;
+      if (pMismatch) hasMismatch = true;
       var cls = 'person-chip ' + (p && p.section==='Pilots' ? 'pilot' : 'support');
       if (selectedPerson === name) cls += ' selected';
-      paxHtml += '<span class="'+cls+'" onclick="selectPerson(\''+esc(name)+'\')">'+name+'</span>';
+      paxHtml += '<span class="'+cls+'" onclick="selectPerson(\''+esc(name)+'\')">'+(pMismatch?'⚠ ':'')+name+'</span>';
     });
 
-    return '<div class="assign-car-box" onclick="moveSelectedTo('+idx+')">'+
-      '<div class="car-header"><span class="car-name">'+a.car+'</span><span class="car-count">'+(1+a.passengers.length)+'/5</span></div>'+
+    var mismatchStyle = hasMismatch ? 'border-color:var(--red);' : '';
+    var locBadge = carLoc ? (function(){var lc=carLoc==='Flexbase'?'flexbase':carLoc==='Kysthotell'?'kysthotell':'fosen'; return ' <span class="hotel-badge '+lc+'" style="font-size:9px;">'+carLoc+'</span>';})() : '';
+    return '<div class="assign-car-box" style="'+mismatchStyle+'" onclick="moveSelectedTo('+idx+')">'+
+      '<div class="car-header"><span class="car-name">'+a.car+locBadge+'</span><span class="car-count">'+(1+a.passengers.length)+'/5</span></div>'+
       '<div class="dep-time"><label>Depart:</label><input type="text" value="'+a.departTime+'" onchange="setDepartTime('+idx+',this.value)" onclick="event.stopPropagation()"></div>'+
       '<div class="dep-time"><label>Dest:</label><input type="text" value="'+a.destination+'" onchange="setDestination('+idx+',this.value)" onclick="event.stopPropagation()"></div>'+
       '<div>'+paxHtml+'</div>'+
@@ -972,8 +1014,9 @@ function renderEditor() {
   CARS.forEach(function(car) {
     var inAssign = currentAssignments.find(function(a){return a.car===car.name;});
     if (inAssign) return;
+    var eLocBadge = car.location ? (function(){var lc=car.location==='Flexbase'?'flexbase':car.location==='Kysthotell'?'kysthotell':'fosen'; return ' <span class="hotel-badge '+lc+'" style="font-size:9px;">'+car.location+'</span>';})() : '';
     html += '<div class="assign-car-box" style="border-color:var(--border);opacity:0.6;" onclick="addToCar(\''+esc(car.name)+'\')">'+
-      '<div class="car-header"><span class="car-name">'+car.name+'</span><span class="car-count">0/5</span>'+(car.permanent?' <span style="font-size:10px;color:var(--amber);">PERM</span>':'')+'</div>'+
+      '<div class="car-header"><span class="car-name">'+car.name+eLocBadge+'</span><span class="car-count">0/5</span>'+(car.permanent?' <span style="font-size:10px;color:var(--amber);">PERM</span>':'')+'</div>'+
       '<div><span style="color:var(--text-dim);font-size:12px;">Empty — tap person then this car</span></div>'+
     '</div>';
   });
@@ -997,6 +1040,12 @@ function addToCar(carName) {
   var name = selectedPerson;
   var car = CARS.find(function(c){return c.name===carName;});
   if (!car) return;
+
+  // Hotel mismatch check
+  var p = PERSONNEL.find(function(p){return p.name===name;});
+  if (p && car.location && p.hotel && p.hotel !== car.location) {
+    if (!confirm(name + ' is at ' + p.hotel + ' but ' + car.name + ' is at ' + car.location + '. Assign anyway?')) return;
+  }
 
   // Remove from current assignment if in one
   for (var i = 0; i < currentAssignments.length; i++) {
@@ -1065,6 +1114,13 @@ function moveSelectedTo(targetIdx) {
   // Add to target
   if (targetIdx !== 'unassigned' && targetIdx >= 0 && targetIdx < currentAssignments.length) {
     var target = currentAssignments[targetIdx];
+    var targetCar = CARS.find(function(c){return c.name===target.car;});
+    var person = PERSONNEL.find(function(p){return p.name===name;});
+    if (person && targetCar && targetCar.location && person.hotel && person.hotel !== targetCar.location) {
+      if (!confirm(name + ' is at ' + person.hotel + ' but ' + target.car + ' is at ' + targetCar.location + '. Assign anyway?')) {
+        selectedPerson = null; renderEditor(); return;
+      }
+    }
     if (1 + target.passengers.length < 5) {
       target.passengers.push(name);
     }
