@@ -469,7 +469,8 @@ var isPilot = false;
 var CARS = [];
 var PERSONNEL = [];
 var presentPersonnel = new Set();
-var currentAssignments = []; // [{car, plate, electric, driver, driverFueler, passengers:[], hotel, destination, departTime}]
+var currentAssignments = (function(){ try { var s=localStorage.getItem('vco_assignments'); return s?JSON.parse(s):[]; } catch(e){ return []; } })();
+function saveAssignmentsLocal() { try { localStorage.setItem('vco_assignments', JSON.stringify(currentAssignments)); } catch(e){} }
 var signoutLog = [];
 var dataLoaded = false;
 var rideAvailable = new Set(); // indices of personnel available for rides from hotel
@@ -617,7 +618,7 @@ function loadAllData() {
     if (schedRows.length > 1 && schedRows[1][0]) {
       try {
         var saved = JSON.parse(schedRows[1][0]);
-        if (Array.isArray(saved) && saved.length && !currentAssignments.length) currentAssignments = saved;
+        if (Array.isArray(saved) && saved.length && !currentAssignments.length) { currentAssignments = saved; saveAssignmentsLocal(); }
       } catch(e) { /* no saved assignments */ }
     }
 
@@ -935,6 +936,7 @@ function clearAssignments() {
 // RENDER ASSIGNMENTS (viewer table)
 // ============================================================
 function renderAssignments() {
+  saveAssignmentsLocal();
   var body = document.getElementById('assignment-body');
   var dateEl = document.getElementById('assignment-date-display');
   if (savedAssignmentDate) {
