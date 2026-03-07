@@ -35,8 +35,8 @@ Transportation management system for 48th FW TDY to Orland/Bodo, Norway. Manages
 ## Personnel Sections
 Pilots, AFE, SARM, Intel, SEL, WX, IDMT, ISSO/GSSO, OMS, ALIS, FSE
 
-## Authorized Fuelers (13 - one per car)
-Merritt, Williams, Olmschenk, Cunningham-Wray, Hanlin, Moroz, Quimby, Ponder, Kolmer, Maldonado, Ortega, Evans, Moore
+## Authorized Fuelers (12 - one per car)
+Merritt, Williams, Olmschenk, Cunningham-Wray, Hanlin, Moroz, Quimby, Ponder, Kolmer, Ortega, Evans, Moore
 
 ## Key Constraints
 - 5 passengers per car max
