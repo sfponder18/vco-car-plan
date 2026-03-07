@@ -671,13 +671,14 @@ function renderFleetGrid(id) {
     return;
   }
 
+  var showPilotView = isPilot && id === 'fleet-grid';
   el.innerHTML = carsToShow.map(function(car) {
-    var dn = carDisplayName(car);
+    var dn = showPilotView ? carDisplayName(car) : car.name;
     var ev = car.electric ? ' <span class="electric">EV</span>' : '';
     var sl = car.permanent ? 'PERMANENT' : car.status==='available' ? 'AVAILABLE' : car.status==='committed' ? 'COMMITTED' : 'RETURNING';
     var iconSrc = car.icon && car.icon.startsWith('http') ? car.icon : 'img/'+car.icon;
-    var iconHtml = (isPilot && car.icon) ? '<img src="'+iconSrc+'" alt="" style="width:48px;height:48px;object-fit:contain;margin:4px auto;display:block;">' : '';
-    var akaHtml = (isPilot && car.pilotName && car.name !== car.pilotName) ? '<div style="font-size:10px;color:var(--text-dim);margin-top:2px;">AKA '+car.name+'</div>' : '';
+    var iconHtml = (showPilotView && car.icon) ? '<img src="'+iconSrc+'" alt="" style="width:48px;height:48px;object-fit:contain;margin:4px auto;display:block;">' : '';
+    var akaHtml = (showPilotView && car.pilotName && car.name !== car.pilotName) ? '<div style="font-size:10px;color:var(--text-dim);margin-top:2px;">AKA '+car.name+'</div>' : '';
     var driverDisplay = car.driver ? personDisplayName(car.driver) : car.assignedTo;
     var locClass = car.location==='Flexbase'?'flexbase':car.location==='Kysthotell'?'kysthotell':'fosen';
     var locHtml = car.location ? '<div style="margin-top:4px;"><span class="hotel-badge '+locClass+'">'+car.location+'</span></div>' : '';
