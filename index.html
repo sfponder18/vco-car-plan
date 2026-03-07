@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VCO Car Plan</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
 :root {
   --bg-primary: #0a0a0a;
@@ -251,6 +253,7 @@ body::before {
     <button class="tab-btn" onclick="switchTab('signout')">Sign-Out</button>
     <button class="tab-btn vco-only" onclick="switchTab('settings')" style="display:none;">Settings</button>
     <button class="tab-btn" onclick="switchTab('info')">Info</button>
+    <button class="tab-btn" onclick="switchTab('rules')">Rules</button>
   </div>
 
   <div class="day-selector" id="day-selector">
@@ -326,6 +329,7 @@ body::before {
         <div style="margin:16px 0;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
           <button class="btn btn-primary" onclick="autoAssign()">Auto-Assign</button>
           <button class="btn btn-sm" style="background:var(--green);color:#000;font-weight:700;" onclick="pushAssignmentsToSheet()">Push to Sheet</button>
+          <button class="btn btn-sm" style="background:#2d5f16;color:#fff;font-weight:700;" onclick="exportPDF()">Export PDF</button>
           <button class="btn btn-red btn-sm" onclick="clearAssignments()">Clear</button>
           <span id="assign-status" style="font-size:12px;color:var(--text-secondary);margin-left:8px;"></span>
         </div>
@@ -425,6 +429,20 @@ body::before {
             <tr><td>Dinner</td><td>15:30 – 20:00</td></tr>
           </tbody>
         </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-rules">
+    <div class="card">
+      <div class="card-header"><h2>VCO Rules</h2></div>
+      <div class="card-body" style="font-size:15px;line-height:1.8;">
+        <ol style="padding-left:20px;">
+          <li style="margin-bottom:12px;"><strong>Push time will be honored.</strong> If you miss it, you are walking.</li>
+          <li style="margin-bottom:12px;"><strong>Keep the car clean and charged.</strong> The vehicle owner (assigned driver) is responsible for this.</li>
+          <li style="margin-bottom:12px;"><strong>Dirty car penalty:</strong> If your car is dirty, the owner will be assessed a <span style="color:var(--gold);font-weight:700;">6-pack</span>.</li>
+          <li style="margin-bottom:12px;"><strong>Lost keys penalty:</strong> If a set of keys is lost, the loser will be assessed a <span style="color:var(--red);font-weight:700;">30-rack</span>.</li>
+        </ol>
       </div>
     </div>
   </div>
@@ -657,7 +675,8 @@ function renderFleetGrid(id) {
     var dn = carDisplayName(car);
     var ev = car.electric ? ' <span class="electric">EV</span>' : '';
     var sl = car.permanent ? 'PERMANENT' : car.status==='available' ? 'AVAILABLE' : car.status==='committed' ? 'COMMITTED' : 'RETURNING';
-    var iconHtml = (isPilot && car.icon) ? '<img src="'+car.icon+'" alt="" style="width:48px;height:48px;object-fit:contain;margin:4px auto;display:block;">' : '';
+    var iconSrc = car.icon && car.icon.startsWith('http') ? car.icon : 'img/'+car.icon;
+    var iconHtml = (isPilot && car.icon) ? '<img src="'+iconSrc+'" alt="" style="width:48px;height:48px;object-fit:contain;margin:4px auto;display:block;">' : '';
     var akaHtml = (isPilot && car.pilotName && car.name !== car.pilotName) ? '<div style="font-size:10px;color:var(--text-dim);margin-top:2px;">AKA '+car.name+'</div>' : '';
     var driverDisplay = car.driver ? personDisplayName(car.driver) : car.assignedTo;
     var locClass = car.location==='Flexbase'?'flexbase':car.location==='Kysthotell'?'kysthotell':'fosen';
@@ -1409,8 +1428,171 @@ function switchTab(tab) {
   document.querySelectorAll('.tab-content').forEach(function(el){el.classList.remove('active');});
   document.querySelectorAll('.tab-btn').forEach(function(el){el.classList.remove('active');});
   document.getElementById('tab-'+tab).classList.add('active');
-  var map={dashboard:'Dashboard',vco:'VCO Panel',cars:'Fleet',signout:'Sign-Out',settings:'Settings',info:'Info'};
+  var map={dashboard:'Dashboard',vco:'VCO Panel',cars:'Fleet',signout:'Sign-Out',settings:'Settings',info:'Info',rules:'Rules'};
   document.querySelectorAll('.tab-btn').forEach(function(el){if(el.textContent===map[tab])el.classList.add('active');});
+}
+
+// ============================================================
+// EXPORT PDF (Puck Board style)
+// ============================================================
+function exportPDF() {
+  if (!currentAssignments.length) { alert('No assignments to export.'); return; }
+  var jsPDF = window.jspdf.jsPDF;
+  var doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
+
+  var pageW = doc.internal.pageSize.getWidth();
+  var pageH = doc.internal.pageSize.getHeight();
+
+  // Colors matching Puck Board
+  var GREEN_HDR = [45, 95, 22];   // dark green
+  var RED_SEC = [139, 30, 30];    // maroon/red section
+  var WHITE = [255, 255, 255];
+  var LIGHT_GREEN = [220, 240, 215];
+  var LIGHT_ROW = [250, 250, 250];
+  var BLACK = [0, 0, 0];
+
+  // Date
+  var dateStr = document.getElementById('vco-date').value || selectedDate;
+  var parts = dateStr.split('-');
+  var dateObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+  var dayLabel = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+
+  // Title bar
+  doc.setFillColor(GREEN_HDR[0], GREEN_HDR[1], GREEN_HDR[2]);
+  doc.rect(0, 0, pageW, 14, 'F');
+  doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('VCO Car Plan', 10, 9);
+  doc.setFontSize(12);
+  doc.text(dayLabel, pageW / 2, 9, { align: 'center' });
+
+  // Location
+  var loc = document.getElementById('tdy-location').textContent || '';
+  if (loc && loc !== '--') {
+    doc.setFontSize(10);
+    doc.text(loc, pageW - 10, 9, { align: 'right' });
+  }
+
+  // Day tabs (M T W T F like Puck Board)
+  var dayLetters = ['M', 'T', 'W', 'T', 'F'];
+  var tabStartX = pageW - 55;
+  var dow = dateObj.getDay(); // 0=Sun
+  doc.setFontSize(8);
+  for (var i = 0; i < 5; i++) {
+    var tx = tabStartX + i * 10;
+    if (i === (dow - 1)) {
+      doc.setFillColor(GREEN_HDR[0], GREEN_HDR[1], GREEN_HDR[2]);
+      doc.rect(tx, 15, 9, 6, 'F');
+      doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
+    } else {
+      doc.setFillColor(230, 230, 230);
+      doc.rect(tx, 15, 9, 6, 'F');
+      doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
+    }
+    doc.text(dayLetters[i], tx + 4.5, 19.5, { align: 'center' });
+  }
+
+  // Morning Push section header
+  doc.setFillColor(RED_SEC[0], RED_SEC[1], RED_SEC[2]);
+  doc.rect(5, 24, 4, 8, 'F');
+  doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text('MORNING PUSH', 12, 30);
+
+  // Build table data grouped by hotel
+  var hotelGroups = {};
+  currentAssignments.forEach(function(a) {
+    var h = a.hotel || 'Other';
+    if (!hotelGroups[h]) hotelGroups[h] = [];
+    hotelGroups[h].push(a);
+  });
+
+  var tableBody = [];
+  var hotelRowIndices = []; // track hotel header rows for styling
+  ['Flexbase', 'Kysthotell', 'Fosen Fjord', 'Other'].forEach(function(hotel) {
+    var group = hotelGroups[hotel];
+    if (!group || !group.length) return;
+    hotelRowIndices.push(tableBody.length);
+    tableBody.push([{ content: hotel.toUpperCase() + ' (' + group.length + ' cars)', colSpan: 8, styles: { fillColor: LIGHT_GREEN, textColor: GREEN_HDR, fontStyle: 'bold', fontSize: 8 } }]);
+    group.forEach(function(a) {
+      var paxNames = a.passengers.map(function(n) { return n; }).join(', ');
+      var ev = a.electric ? ' (EV)' : '';
+      tableBody.push([
+        a.car,
+        a.plate + ev,
+        a.driver + (a.driverFueler ? ' [F]' : ''),
+        paxNames || '--',
+        hotel,
+        a.destination,
+        a.departTime + 'L',
+        a.etaReturn ? a.etaReturn + 'L' : '--'
+      ]);
+    });
+  });
+
+  doc.autoTable({
+    startY: 34,
+    margin: { left: 5, right: 5 },
+    head: [['Car', 'Plate', 'Driver', 'Passengers', 'Hotel', 'Destination', 'Depart', 'ETA Return']],
+    body: tableBody,
+    theme: 'grid',
+    headStyles: {
+      fillColor: GREEN_HDR,
+      textColor: WHITE,
+      fontStyle: 'bold',
+      fontSize: 8,
+      cellPadding: 2,
+      halign: 'left'
+    },
+    bodyStyles: {
+      fontSize: 7,
+      cellPadding: 1.5,
+      textColor: BLACK,
+      lineColor: [180, 180, 180],
+      lineWidth: 0.2
+    },
+    alternateRowStyles: {
+      fillColor: LIGHT_ROW
+    },
+    columnStyles: {
+      0: { fontStyle: 'bold', cellWidth: 25 },
+      1: { cellWidth: 25 },
+      2: { cellWidth: 35 },
+      3: { cellWidth: 55 },
+      4: { cellWidth: 22 },
+      5: { cellWidth: 30 },
+      6: { cellWidth: 20, halign: 'center' },
+      7: { cellWidth: 20, halign: 'center' }
+    },
+    didParseCell: function(data) {
+      // Style hotel header rows
+      if (data.section === 'body' && hotelRowIndices.indexOf(data.row.index) >= 0) {
+        data.cell.styles.fillColor = LIGHT_GREEN;
+        data.cell.styles.textColor = GREEN_HDR;
+        data.cell.styles.fontStyle = 'bold';
+      }
+    }
+  });
+
+  // Summary stats at bottom
+  var finalY = doc.lastAutoTable.finalY + 8;
+  var totalPax = currentAssignments.reduce(function(s, a) { return s + 1 + a.passengers.length; }, 0);
+  doc.setFontSize(9);
+  doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Total: ' + currentAssignments.length + ' cars | ' + totalPax + ' personnel', 5, finalY);
+
+  // Footer
+  doc.setFontSize(7);
+  doc.setTextColor(120, 120, 120);
+  doc.text('Generated: ' + new Date().toLocaleString('en-US', { hour12: false }), 5, pageH - 5);
+  doc.text('VCO Car Plan', pageW - 5, pageH - 5, { align: 'right' });
+
+  // Download
+  var filename = 'VCO_Car_Plan_' + dateStr + '.pdf';
+  doc.save(filename);
 }
 
 function initApp() {
