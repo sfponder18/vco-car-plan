@@ -484,18 +484,12 @@ var savedAssignmentDate = ''; // date from Daily Schedule B2
 // PILOT VIEW HELPERS
 // ============================================================
 function carDisplayName(car) {
-  if (isPilot && car.pilotName) return car.pilotName;
   return car.name;
 }
 function carDisplayNameByName(name) {
-  var car = CARS.find(function(c){return c.name===name;});
-  if (car && isPilot && car.pilotName) return car.pilotName;
   return name;
 }
 function personDisplayName(name) {
-  if (!isPilot) return name;
-  var p = PERSONNEL.find(function(p){return p.name===name;});
-  if (p && p.callsign) return p.callsign;
   return name;
 }
 
@@ -671,7 +665,7 @@ function renderFleetGrid(id) {
     return;
   }
 
-  var showPilotView = isPilot && id === 'fleet-grid';
+  var showPilotView = false;
   el.innerHTML = carsToShow.map(function(car) {
     var dn = showPilotView ? carDisplayName(car) : car.name;
     var ev = car.electric ? ' <span class="electric">EV</span>' : '';
