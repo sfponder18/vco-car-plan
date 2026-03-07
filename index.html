@@ -484,12 +484,18 @@ var savedAssignmentDate = ''; // date from Daily Schedule B2
 // PILOT VIEW HELPERS
 // ============================================================
 function carDisplayName(car) {
+  if (isPilot && car.pilotName) return car.pilotName;
   return car.name;
 }
 function carDisplayNameByName(name) {
+  var car = CARS.find(function(c){return c.name===name;});
+  if (car && isPilot && car.pilotName) return car.pilotName;
   return name;
 }
 function personDisplayName(name) {
+  if (!isPilot) return name;
+  var p = PERSONNEL.find(function(p){return p.name===name;});
+  if (p && p.callsign) return p.callsign;
   return name;
 }
 
@@ -665,7 +671,7 @@ function renderFleetGrid(id) {
     return;
   }
 
-  var showPilotView = false;
+  var showPilotView = isPilot && id === 'fleet-grid';
   el.innerHTML = carsToShow.map(function(car) {
     var dn = showPilotView ? carDisplayName(car) : car.name;
     var ev = car.electric ? ' <span class="electric">EV</span>' : '';
@@ -673,7 +679,7 @@ function renderFleetGrid(id) {
     var iconSrc = car.icon && car.icon.startsWith('http') ? car.icon : 'img/'+car.icon;
     var iconHtml = (showPilotView && car.icon) ? '<img src="'+iconSrc+'" alt="" style="width:48px;height:48px;object-fit:contain;margin:4px auto;display:block;">' : '';
     var akaHtml = (showPilotView && car.pilotName && car.name !== car.pilotName) ? '<div style="font-size:10px;color:var(--text-dim);margin-top:2px;">AKA '+car.name+'</div>' : '';
-    var driverDisplay = car.driver ? personDisplayName(car.driver) : car.assignedTo;
+    var driverDisplay = car.driver ? (showPilotView ? personDisplayName(car.driver) : car.driver) : car.assignedTo;
     var locClass = car.location==='Flexbase'?'flexbase':car.location==='Kysthotell'?'kysthotell':'fosen';
     var locHtml = car.location ? '<div style="margin-top:4px;"><span class="hotel-badge '+locClass+'">'+car.location+'</span></div>' : '';
     return '<div class="car-card '+car.status+'">'+iconHtml+'<div class="car-card-name">'+dn+'</div>'+akaHtml+'<div class="car-card-plate">'+car.plate+ev+'</div>'+locHtml+'<div class="car-status-badge">'+sl+'</div>'+(driverDisplay?'<div class="car-card-detail"><strong>'+driverDisplay+'</strong>'+(car.dest?'<br>'+car.dest:'')+(car.eta?'<br>ETA: '+car.eta:'')+'</div>':'')+'</div>';
@@ -949,14 +955,14 @@ function renderAssignments() {
   body.innerHTML = currentAssignments.map(function(a) {
     var hc = a.hotel==='Flexbase'?'flexbase':a.hotel==='Kysthotell'?'kysthotell':'fosen';
     var ev = a.electric ? ' <span style="color:var(--green);font-size:10px;">EV</span>' : '';
-    var carDN = carDisplayNameByName(a.car);
-    var akaLine = (isPilot && carDN !== a.car) ? '<br><span style="color:var(--text-dim);font-size:10px;">AKA '+a.car+'</span>' : '';
-    var driverDN = personDisplayName(a.driver);
+    var carDN = a.car;
+    var akaLine = '';
+    var driverDN = a.driver;
     var driverNeedsRide = (function(){ var pi=PERSONNEL.findIndex(function(p){return p.name===a.driver;}); return pi>=0&&rideAvailable.has(pi); })();
     var paxDN = a.passengers.map(function(n){
       var pi=PERSONNEL.findIndex(function(p){return p.name===n;});
       var needsRide = pi>=0&&rideAvailable.has(pi);
-      return personDisplayName(n)+(needsRide?' <span style="color:var(--purple);font-size:10px;font-weight:600;">RIDE</span>':'');
+      return n+(needsRide?' <span style="color:var(--purple);font-size:10px;font-weight:600;">RIDE</span>':'');
     });
     return '<tr>'+
       '<td><strong>'+carDN+'</strong>'+akaLine+ev+'<br><span style="color:var(--text-dim);font-size:11px;">'+a.plate+'</span></td>'+
@@ -1218,8 +1224,7 @@ function filterSignoutCars() {
   grid.innerHTML = available.length ? available.map(function(c) {
     var sel = selectedSignoutCar === c.name ? 'background:var(--gold);color:#000;' : 'background:var(--bg-card);color:var(--text-primary);';
     var ev = c.electric ? ' <span style="color:var(--green);font-size:10px;">EV</span>' : '';
-    var cdn = carDisplayName(c);
-    return '<div onclick="selectSignoutCar(\''+c.name+'\')" style="'+sel+'border:1px solid var(--border);border-radius:6px;padding:8px 14px;cursor:pointer;font-family:JetBrains Mono,monospace;font-size:13px;font-weight:600;"><strong>'+cdn+'</strong>'+ev+'<br><span style="font-size:10px;color:var(--text-dim);">'+c.plate+'</span></div>';
+    return '<div onclick="selectSignoutCar(\''+c.name+'\')" style="'+sel+'border:1px solid var(--border);border-radius:6px;padding:8px 14px;cursor:pointer;font-family:JetBrains Mono,monospace;font-size:13px;font-weight:600;"><strong>'+c.name+'</strong>'+ev+'<br><span style="font-size:10px;color:var(--text-dim);">'+c.plate+'</span></div>';
   }).join('') : '<span style="color:var(--red);font-size:13px;">No cars available for this time window</span>';
 }
 
@@ -1288,8 +1293,8 @@ function renderCarsOut() {
       status = '<span style="color:var(--gold);font-weight:600;">Out</span>';
     }
     return '<tr>'+
-      '<td><strong>'+carDisplayNameByName(s.car)+'</strong></td>'+
-      '<td>'+personDisplayName(s.driver)+'</td>'+
+      '<td><strong>'+s.car+'</strong></td>'+
+      '<td>'+s.driver+'</td>'+
       '<td>'+s.dest+'</td>'+
       '<td style="font-family:JetBrains Mono,monospace;color:var(--gold);font-weight:600;">'+s.time+'L</td>'+
       '<td style="font-family:JetBrains Mono,monospace;">'+(s.eta?s.eta+'L':'--')+'</td>'+
@@ -1309,7 +1314,7 @@ function renderSignoutLog() {
       actions = '<button class="btn btn-sm btn-green" onclick="returnCar('+i+')">Return</button> ';
     }
     actions += '<button class="btn btn-sm btn-red" onclick="deleteSignout('+i+')" style="font-size:10px;padding:2px 6px;">X</button>';
-    return '<tr><td style="font-family:JetBrains Mono,monospace;color:var(--gold);font-weight:600;">'+s.time+'L</td><td><strong>'+carDisplayNameByName(s.car)+'</strong></td><td>'+personDisplayName(s.driver)+'</td><td>'+s.dest+'</td><td style="font-family:JetBrains Mono,monospace;">'+(s.eta?s.eta+'L':'--')+'</td><td style="font-family:JetBrains Mono,monospace;">'+(s.timeIn?s.timeIn+'L':'--')+'</td><td>'+actions+'</td></tr>';
+    return '<tr><td style="font-family:JetBrains Mono,monospace;color:var(--gold);font-weight:600;">'+s.time+'L</td><td><strong>'+s.car+'</strong></td><td>'+s.driver+'</td><td>'+s.dest+'</td><td style="font-family:JetBrains Mono,monospace;">'+(s.eta?s.eta+'L':'--')+'</td><td style="font-family:JetBrains Mono,monospace;">'+(s.timeIn?s.timeIn+'L':'--')+'</td><td>'+actions+'</td></tr>';
   }).join('');
 }
 
