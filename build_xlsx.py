@@ -93,19 +93,19 @@ personnel = [
 ]
 
 cars = [
-    ('Car 1',  'Skadi',    'EP69777',  'Yes', 5, '',           'Available', '', 'Flexbase'),
-    ('Car 2',  'Thor',     'EN71155',  'No',  5, '',           'Available', '', 'Flexbase'),
-    ('Car 3',  'Freya',    'EN35700',  'No',  5, '',           'Available', '', 'Flexbase'),
-    ('Car 4',  'Tyr',      'EN46650',  'No',  5, '',           'Available', '', 'Kysthotell'),
-    ('Car 5',  'Loki',     'NH17739',  'No',  5, '',           'Available', '', 'Kysthotell'),
-    ('Car 6',  'Heimdall', 'AS68952',  'No',  5, '',           'Available', '', 'Kysthotell'),
-    ('Car 7',  'Baldur',   'EN43555',  'No',  5, '',           'Available', '', 'Kysthotell'),
-    ('Car 8',  'Vidar',    'EN53375',  'No',  5, '',           'Available', '', 'Flexbase'),
-    ('Car 9',  'Bragi',    'EN87446',  'No',  5, '',           'Available', '', 'Flexbase'),
-    ('Car 10', 'Fenrir',   'EN10871',  'No',  5, '',           'Available', '', 'Flexbase'),
-    ('Car 11', 'Ragnar',   'OW75VLN',  'No',  5, '',           'Available', '', 'Flexbase'),
-    ('Car 12', 'Odin',     'VJ36980',  'No',  5, 'Skooby',    'Permanent', '', 'Flexbase'),
-    ('Car 13', 'Mjolnir',  'EP82941',  'Yes', 5, 'Tony/Sean', 'Permanent', '', 'Flexbase'),
+    ('Car 1',  'Skadi',    'EP69777',  'Yes', 5, '',           'Available', '', 'Flexbase',    'Commander in Chief - Hossein S',         'https://sfponder18.github.io/vco-car-plan/img/hosSal.jpg'),
+    ('Car 2',  'Thor',     'EN71155',  'Yes', 5, '',           'Available', '', 'Flexbase',    'AEROSPACE FORCE - Amir Ali H',           'https://sfponder18.github.io/vco-car-plan/img/AmirHaji.jpg'),
+    ('Car 3',  'Freya',    'EN35700',  'Yes', 5, '',           'Available', '', 'Flexbase',    'GROUND FORCES - DRIFT C',                'https://sfponder18.github.io/vco-car-plan/img/DriftC.jpg'),
+    ('Car 4',  'Tyr',      'EN46650',  'Yes', 5, '',           'Available', '', 'Kysthotell',  'COUNTERINTELLIGENCE - Mohammad K',       'https://sfponder18.github.io/vco-car-plan/img/AliTan.jpg'),
+    ('Car 5',  'Loki',     'NH17739',  'No',  5, '',           'Available', '', 'Kysthotell',  'NAVY - Alireza T',                       'https://sfponder18.github.io/vco-car-plan/img/AliTan.jpg'),
+    ('Car 6',  'Heimdall', 'AS68952',  'No',  5, '',           'Available', '', 'Kysthotell',  'BASIJ - Gholamreza S',                   'https://sfponder18.github.io/vco-car-plan/img/GhoSol.jpg'),
+    ('Car 7',  'Baldur',   'EN43555',  'Yes', 5, '',           'Available', '', 'Kysthotell',  'QUDS FORCE - Ismail Q',                  'https://sfponder18.github.io/vco-car-plan/img/IsmQaan.jpg'),
+    ('Car 8',  'Vidar',    'EN53375',  'Yes', 5, '',           'Available', '', 'Flexbase',    'INTELLIGENCE - Hossein T',               'https://sfponder18.github.io/vco-car-plan/img/HosTae.jpg'),
+    ('Car 9',  'Bragi',    'EN87446',  'Yes', 5, '',           'Available', '', 'Flexbase',    'SECURITY - Fatholla J',                  'https://sfponder18.github.io/vco-car-plan/img/FathJom.jpg'),
+    ('Car 10', 'Fenrir',   'EN10871',  'Yes', 5, '',           'Available', '', 'Flexbase',    'DEPUTY IRCG AEROSPACE - Fereydoun S',    'https://sfponder18.github.io/vco-car-plan/img/FerSaq.jpg'),
+    ('Car 11', 'Ragnar',   'OW75VLN',  'No',  5, '',           'Available', '', 'Flexbase',    'Old Prospector - Gus C',                 'https://sfponder18.github.io/vco-car-plan/img/GusC.jpg'),
+    ('Car 12', 'Odin',     'VJ36980',  'No',  5, 'Skooby',    'Permanent', 'Always assigned', 'Flexbase',    'SUPREME LEADER - Ali K',  'https://sfponder18.github.io/vco-car-plan/img/AliKham.jpg'),
+    ('Car 13', 'Mjolnir',  'EP82941',  'Yes', 5, 'Tony/Sean', 'Permanent', 'Always assigned', 'Flexbase',    'SUPREME EATER - VLAB P', 'https://sfponder18.github.io/vco-car-plan/img/VP.jpg'),
 ]
 
 car_names_assignable = ['Skadi','Thor','Freya','Tyr','Loki','Heimdall','Baldur','Vidar','Bragi','Fenrir','Ragnar']
@@ -136,12 +136,12 @@ for label_cell, label, val_cell, val in [
     ws[val_cell] = val
 
 # Car inventory
-ws.merge_cells('A9:I9')
+ws.merge_cells('A9:K9')
 ws['A9'] = 'CAR INVENTORY'
 ws['A9'].font = subheader_font
 ws['A9'].fill = dark_fill
 
-for i, h in enumerate(['Car #', 'Norse Name', 'Plate', 'Electric', 'Capacity', 'Permanent Assign', 'Status', 'Notes', 'Location'], 1):
+for i, h in enumerate(['Car #', 'Norse Name', 'Plate', 'Electric', 'Capacity', 'Permanent Assign', 'Status', 'Notes', 'Location', 'Pilot Name', 'Icon URL'], 1):
     cell = ws.cell(row=10, column=i, value=h)
     cell.font = Font(bold=True, size=10, color='FFFFFF')
     cell.fill = PatternFill('solid', fgColor='374151')
@@ -277,7 +277,7 @@ for i, h in enumerate(['Car', 'Norse Name', 'Status', 'Driver', 'Destination', '
     cell.alignment = center
     cell.border = thin_border
 
-for r, (car_num, name, plate, elec, cap, perm, status) in enumerate(cars, 5):
+for r, (car_num, name, plate, elec, cap, perm, status, notes, location, pilot_name, icon_url) in enumerate(cars, 5):
     ws3.cell(row=r, column=1, value=car_num).border = thin_border
     ws3.cell(row=r, column=2, value=name).border = thin_border
     ws3.cell(row=r, column=3, value=status).border = thin_border
