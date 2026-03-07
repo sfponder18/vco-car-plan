@@ -617,7 +617,7 @@ function loadAllData() {
     if (schedRows.length > 1 && schedRows[1][0]) {
       try {
         var saved = JSON.parse(schedRows[1][0]);
-        if (Array.isArray(saved) && saved.length) currentAssignments = saved;
+        if (Array.isArray(saved) && saved.length && !currentAssignments.length) currentAssignments = saved;
       } catch(e) { /* no saved assignments */ }
     }
 
