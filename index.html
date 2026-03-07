@@ -556,7 +556,7 @@ function loadAllData() {
       if (!r || !r[0] || !r[0].match(/^Car \d/)) continue;
       var plate = r[2]||'';
       var isElectric = plate.toUpperCase().startsWith('E');
-      CARS.push({ num: parseInt(r[0].replace('Car ','')), name: r[1]||'', pilotName: r[8]||'', icon: r[9]||'', plate: plate, electric: isElectric, capacity: parseInt(r[4])||5, permanent: !!(r[5]), assignedTo: r[5]||'', status: (r[6]||'').toLowerCase().includes('permanent') ? 'permanent' : 'available', driver:'', dest:'', eta:'' });
+      CARS.push({ num: parseInt(r[0].replace('Car ','')), name: r[1]||'', pilotName: r[9]||'', icon: r[10]||'', plate: plate, electric: isElectric, capacity: parseInt(r[4])||5, permanent: !!(r[5]), assignedTo: r[5]||'', status: (r[6]||'').toLowerCase().includes('permanent') ? 'permanent' : 'available', location: r[8]||'', driver:'', dest:'', eta:'' });
     }
 
     // Availability tab status is only used for sign-out log driven statuses
@@ -660,7 +660,9 @@ function renderFleetGrid(id) {
     var iconHtml = (isPilot && car.icon) ? '<img src="'+car.icon+'" alt="" style="width:48px;height:48px;object-fit:contain;margin:4px auto;display:block;">' : '';
     var akaHtml = (isPilot && car.pilotName && car.name !== car.pilotName) ? '<div style="font-size:10px;color:var(--text-dim);margin-top:2px;">AKA '+car.name+'</div>' : '';
     var driverDisplay = car.driver ? personDisplayName(car.driver) : car.assignedTo;
-    return '<div class="car-card '+car.status+'">'+iconHtml+'<div class="car-card-name">'+dn+'</div>'+akaHtml+'<div class="car-card-plate">'+car.plate+ev+'</div><div class="car-status-badge">'+sl+'</div>'+(driverDisplay?'<div class="car-card-detail"><strong>'+driverDisplay+'</strong>'+(car.dest?'<br>'+car.dest:'')+(car.eta?'<br>ETA: '+car.eta:'')+'</div>':'')+'</div>';
+    var locClass = car.location==='Flexbase'?'flexbase':car.location==='Kysthotell'?'kysthotell':'fosen';
+    var locHtml = car.location ? '<div style="margin-top:4px;"><span class="hotel-badge '+locClass+'">'+car.location+'</span></div>' : '';
+    return '<div class="car-card '+car.status+'">'+iconHtml+'<div class="car-card-name">'+dn+'</div>'+akaHtml+'<div class="car-card-plate">'+car.plate+ev+'</div>'+locHtml+'<div class="car-status-badge">'+sl+'</div>'+(driverDisplay?'<div class="car-card-detail"><strong>'+driverDisplay+'</strong>'+(car.dest?'<br>'+car.dest:'')+(car.eta?'<br>ETA: '+car.eta:'')+'</div>':'')+'</div>';
   }).join('');
 }
 

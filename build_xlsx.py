@@ -93,19 +93,19 @@ personnel = [
 ]
 
 cars = [
-    ('Car 1',  'Skadi',    'EP69777',  'Yes', 5, '',           'Available'),
-    ('Car 2',  'Thor',     'EN71155',  'No',  5, '',           'Available'),
-    ('Car 3',  'Freya',    'EN35700',  'No',  5, '',           'Available'),
-    ('Car 4',  'Tyr',      'EN46650',  'No',  5, '',           'Available'),
-    ('Car 5',  'Loki',     'NH17739',  'No',  5, '',           'Available'),
-    ('Car 6',  'Heimdall', 'AS68952',  'No',  5, '',           'Available'),
-    ('Car 7',  'Baldur',   'EN43555',  'No',  5, '',           'Available'),
-    ('Car 8',  'Vidar',    'EN53375',  'No',  5, '',           'Available'),
-    ('Car 9',  'Bragi',    'EN87446',  'No',  5, '',           'Available'),
-    ('Car 10', 'Fenrir',   'EN10871',  'No',  5, '',           'Available'),
-    ('Car 11', 'Ragnar',   'OW75VLN',  'No',  5, '',           'Available'),
-    ('Car 12', 'Odin',     'VJ36980',  'No',  5, 'Skooby',    'Permanent'),
-    ('Car 13', 'Mjolnir',  'EP82941',  'Yes', 5, 'Tony/Sean', 'Permanent'),
+    ('Car 1',  'Skadi',    'EP69777',  'Yes', 5, '',           'Available', '', 'Flexbase'),
+    ('Car 2',  'Thor',     'EN71155',  'No',  5, '',           'Available', '', 'Flexbase'),
+    ('Car 3',  'Freya',    'EN35700',  'No',  5, '',           'Available', '', 'Flexbase'),
+    ('Car 4',  'Tyr',      'EN46650',  'No',  5, '',           'Available', '', 'Kysthotell'),
+    ('Car 5',  'Loki',     'NH17739',  'No',  5, '',           'Available', '', 'Kysthotell'),
+    ('Car 6',  'Heimdall', 'AS68952',  'No',  5, '',           'Available', '', 'Kysthotell'),
+    ('Car 7',  'Baldur',   'EN43555',  'No',  5, '',           'Available', '', 'Kysthotell'),
+    ('Car 8',  'Vidar',    'EN53375',  'No',  5, '',           'Available', '', 'Flexbase'),
+    ('Car 9',  'Bragi',    'EN87446',  'No',  5, '',           'Available', '', 'Flexbase'),
+    ('Car 10', 'Fenrir',   'EN10871',  'No',  5, '',           'Available', '', 'Flexbase'),
+    ('Car 11', 'Ragnar',   'OW75VLN',  'No',  5, '',           'Available', '', 'Flexbase'),
+    ('Car 12', 'Odin',     'VJ36980',  'No',  5, 'Skooby',    'Permanent', '', 'Flexbase'),
+    ('Car 13', 'Mjolnir',  'EP82941',  'Yes', 5, 'Tony/Sean', 'Permanent', '', 'Flexbase'),
 ]
 
 car_names_assignable = ['Skadi','Thor','Freya','Tyr','Loki','Heimdall','Baldur','Vidar','Bragi','Fenrir','Ragnar']
@@ -136,12 +136,12 @@ for label_cell, label, val_cell, val in [
     ws[val_cell] = val
 
 # Car inventory
-ws.merge_cells('A9:H9')
+ws.merge_cells('A9:I9')
 ws['A9'] = 'CAR INVENTORY'
 ws['A9'].font = subheader_font
 ws['A9'].fill = dark_fill
 
-for i, h in enumerate(['Car #', 'Norse Name', 'Plate', 'Electric', 'Capacity', 'Permanent Assign', 'Status', 'Notes'], 1):
+for i, h in enumerate(['Car #', 'Norse Name', 'Plate', 'Electric', 'Capacity', 'Permanent Assign', 'Status', 'Notes', 'Location'], 1):
     cell = ws.cell(row=10, column=i, value=h)
     cell.font = Font(bold=True, size=10, color='FFFFFF')
     cell.fill = PatternFill('solid', fgColor='374151')
