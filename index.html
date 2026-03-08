@@ -464,7 +464,7 @@ var REFRESH_SEC = 60;
 var PASS_VIEWER = '5bf77be6';
 var PASS_VCO = '44fc7d9c';
 var PASS_PILOT = 'f781b272';
-var WEBAPP_URL = localStorage.getItem('vco_webapp_url') || 'https://script.google.com/macros/s/AKfycbwOoXypQcpHD9HEe7NJVq7XCdCRv5fc2wzwT9OH3cxa8FuUjS0gWnw4G8CbfyXP51Q_Ww/exec';
+var WEBAPP_URL = localStorage.getItem('vco_webapp_url') || 'https://script.google.com/macros/s/AKfycbwsX3jnE5tQF8Lg8GFgBsPeu5O8C583YCd8uPfmoYFpm1clnOfGnnFbw3Ek4FssK3H_/exec';
 
 // STATE
 var isVCO = false;
@@ -1355,30 +1355,12 @@ function clearWebAppUrl() {
 function pushAssignmentsToSheet() {
   if (!currentAssignments.length) return;
   var date = document.getElementById('vco-date').value || '';
-  var statusEl = document.getElementById('assign-status');
-  statusEl.textContent = 'Pushing...';
-
-  // Write date to B2 and assignments JSON to B3 via Sheets API
-  var url = 'https://sheets.googleapis.com/v4/spreadsheets/' + SHEET_ID + '/values/Daily%20Schedule!B2:B3?valueInputOption=RAW&key=' + API_KEY;
-  fetch(url, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      range: 'Daily Schedule!B2:B3',
-      majorDimension: 'ROWS',
-      values: [[date], [JSON.stringify(currentAssignments)]]
-    })
-  }).then(function(resp) {
-    if (!resp.ok) return resp.json().then(function(e){ throw new Error(e.error.message); });
-    return resp.json();
-  }).then(function() {
-    statusEl.textContent = 'Pushed to sheet!';
-    statusEl.style.color = 'var(--green)';
-  }).catch(function(err) {
-    statusEl.textContent = 'Push failed: ' + err.message;
-    statusEl.style.color = 'var(--red)';
-    console.error('Push error:', err);
+  postToSheet({
+    action: 'saveAssignments',
+    date: date,
+    assignments: currentAssignments
   });
+  document.getElementById('assign-status').textContent = 'Pushed to sheet!';
 }
 
 // ============================================================
