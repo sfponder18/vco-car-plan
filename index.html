@@ -271,17 +271,17 @@ body::before {
   <div class="tab-content active" id="tab-dashboard">
     <div class="card">
       <div class="card-header">
-        <h2>Morning Push</h2>
+        <h2>Car Plan — Flexbase</h2>
         <div style="display:flex;align-items:center;gap:12px;">
           <span id="assignment-date-display" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-secondary);"></span>
           <span id="show-time-display" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold-light);">--</span>
         </div>
       </div>
       <div class="card-body" style="padding:0;overflow-x:auto;">
-        <table class="assign-table">
-          <thead><tr><th>Car</th><th>Driver</th><th>Passengers</th><th>Hotel</th><th>Destination</th><th>Depart</th><th>ETA Return</th><th>Returned</th></tr></thead>
-          <tbody id="assignment-body"><tr><td colspan="8" style="text-align:center;color:var(--text-dim);padding:40px;">No assignments yet.</td></tr></tbody>
-        </table>
+        <div id="slot-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;padding:12px;"></div>
+        <div style="padding:12px 16px;border-top:1px solid var(--border);color:var(--gold);font-weight:600;font-size:13px;text-align:center;">
+          KYSTHOTELL / FOSEN FJORD: See individual shop schedule
+        </div>
       </div>
     </div>
     <div class="card">
@@ -323,19 +323,19 @@ body::before {
   <!-- VCO PANEL (VCO only) -->
   <div class="tab-content" id="tab-vco">
     <div class="card">
-      <div class="card-header"><h2>Generate Assignments</h2></div>
+      <div class="card-header"><h2>Edit Car Plan</h2></div>
       <div class="card-body">
         <div class="vco-controls">
           <div class="control-group"><label>Date</label><input type="date" id="vco-date"></div>
-          <div class="control-group"><label>Destination</label><input type="text" id="vco-destination" placeholder="Ops / Flightline" value="Ops / Flightline"></div>
         </div>
         <div style="margin:16px 0;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
-          <button class="btn btn-primary" onclick="autoAssign()">Auto-Assign</button>
           <button class="btn btn-sm" style="background:var(--green);color:#000;font-weight:700;" onclick="pushAssignmentsToSheet()">Push to Sheet</button>
           <button class="btn btn-sm" style="background:#2d5f16;color:#fff;font-weight:700;" onclick="exportPDF()">Export PDF</button>
-          <button class="btn btn-red btn-sm" onclick="clearAssignments()">Clear</button>
+          <button class="btn btn-red btn-sm" onclick="clearSlots()">Clear All People</button>
           <span id="assign-status" style="font-size:12px;color:var(--text-secondary);margin-left:8px;"></span>
         </div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">Tap a name in the roster, then tap a slot to assign them. Tap a name in a slot to remove.</div>
+        <div id="slot-editor" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;"></div>
       </div>
     </div>
 
@@ -352,23 +352,8 @@ body::before {
         <div class="hotel-summary" id="hotel-summary"></div>
         <div style="display:flex;gap:16px;align-items:center;margin-bottom:8px;font-size:11px;color:var(--text-secondary);font-family:'JetBrains Mono',monospace;letter-spacing:1px;">
           <span><input type="checkbox" checked disabled style="width:14px;height:14px;accent-color:var(--gold);vertical-align:middle;"> PRESENT</span>
-          <span><input type="checkbox" class="ride-check" checked disabled style="width:14px;height:14px;accent-color:var(--green);vertical-align:middle;"> NEEDS RIDE</span>
         </div>
         <div class="roster-grid" id="roster-grid"><div class="loading"><div class="spinner"></div><br>Loading roster...</div></div>
-      </div>
-    </div>
-
-    <div class="card" id="editor-card" style="display:none;">
-      <div class="card-header">
-        <h2>Edit Assignments</h2>
-        <div style="font-size:12px;color:var(--text-secondary);" id="edit-hint">Tap a person, then tap a car to move them</div>
-      </div>
-      <div class="card-body">
-        <div class="unassigned-box" id="unassigned-box" onclick="moveSelectedTo('unassigned')" style="display:none;">
-          <div class="label">Unassigned</div>
-          <div id="unassigned-people"></div>
-        </div>
-        <div class="assign-editor" id="assign-editor" style="margin-top:16px;"></div>
       </div>
     </div>
   </div>
@@ -472,13 +457,42 @@ var isPilot = false;
 var CARS = [];
 var PERSONNEL = [];
 var presentPersonnel = new Set();
-var currentAssignments = (function(){ try { var s=localStorage.getItem('vco_assignments'); return s?JSON.parse(s):[]; } catch(e){ return []; } })();
-function saveAssignmentsLocal() { try { localStorage.setItem('vco_assignments', JSON.stringify(currentAssignments)); } catch(e){} }
+var currentAssignments = [];
 var signoutLog = [];
 var dataLoaded = false;
-var rideAvailable = new Set(); // indices of personnel available for rides from hotel
+var rideAvailable = new Set();
 var rosterEditedLocally = false;
-var selectedPerson = null; // name of person being moved
+var selectedPerson = null;
+
+// Fixed car slots (hardcoded from 10Mar plan)
+var CAR_SLOTS = [
+  {num:1, label:'Skooby', plate:'VJ36980', push:'0730', make:''},
+  {num:2, label:'2nd AM', plate:'EN35700', push:'0730', make:'Nissan'},
+  {num:3, label:'PM', plate:'EN10871', push:'1600', make:'VW'},
+  {num:4, label:'MPC Car 1', plate:'EN71155', push:'0700', make:'Ford'},
+  {num:5, label:'T3 Car AM', plate:'AS68952', push:'1100', make:'Suzuki'},
+  {num:6, label:'T3 Car PM', plate:'EN43555', push:'1700', make:'Volvo'},
+  {num:7, label:'DROP OFF JUDO', plate:'EP69777', push:'', make:'Ford'},
+  {num:8, label:'OPEN', plate:'NH17739', push:'A/R', make:'Suzuki'},
+  {num:9, label:'OMS', plate:'?', push:'A/R', make:''}
+];
+// slotAssignments[slotIndex] = [name1, name2, ...] (up to 5)
+var slotAssignments = (function(){ try { var s=localStorage.getItem('vco_slots'); return s?JSON.parse(s):[]; } catch(e){ return []; } })();
+if (!slotAssignments.length || slotAssignments.every(function(s){return !s.length;})) {
+  slotAssignments = [
+    ['Merrit D','Samarah L','Olmschenk C','Kolmer B'],
+    ['Reen G','Evans N','McGinty G','Moore J'],
+    ['Silva R','Hlavinka N','Wienke M','Quimby J'],
+    ['Howard A','Ponder S','Pieton R','Thompson B'],
+    ['Pieton R'],
+    ['Gould J'],
+    ['Woodall R','Holmes T'],
+    [],
+    []
+  ];
+  try { localStorage.setItem('vco_slots', JSON.stringify(slotAssignments)); } catch(e){}
+}
+function saveSlotsLocal() { try { localStorage.setItem('vco_slots', JSON.stringify(slotAssignments)); } catch(e){} }
 var fleetShowAll = false;
 var selectedDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 var weekStartOffset = 0; // offset in days from current week's Monday
@@ -621,7 +635,14 @@ function loadAllData() {
     if (schedRows.length > 1 && schedRows[1][0]) {
       try {
         var saved = JSON.parse(schedRows[1][0]);
-        if (Array.isArray(saved) && saved.length && !currentAssignments.length) { currentAssignments = saved; saveAssignmentsLocal(); }
+        // Check if saved data is in slot format (array of objects with .people)
+        if (Array.isArray(saved) && saved.length && saved[0].people) {
+          var hasLocalSlots = slotAssignments.some(function(s){return s.length>0;});
+          if (!hasLocalSlots) {
+            slotAssignments = saved.map(function(s){return s.people||[];});
+            saveSlotsLocal();
+          }
+        }
       } catch(e) { /* no saved assignments */ }
     }
 
@@ -747,7 +768,14 @@ function renderRoster() {
     var hc = hotel==='Flexbase'?'flexbase':hotel==='Kysthotell'?'kysthotell':'fosen';
     html += '<div style="grid-column:1/-1;margin-top:12px;margin-bottom:4px;"><span class="hotel-badge '+hc+'">'+hotel+' ('+people.length+')</span></div>';
     people.forEach(function(p) {
-      html += '<div class="roster-item"><input type="checkbox" '+(presentPersonnel.has(p.idx)?'checked':'')+' onchange="togglePresent('+p.idx+',this.checked)" title="Present"><input type="checkbox" class="ride-check" '+(rideAvailable.has(p.idx)?'checked':'')+' onchange="toggleRide('+p.idx+',this.checked)" title="Needs ride from hotel"><span class="name">'+p.name+'</span><span class="section-tag">'+p.section+'</span>'+(p.fueler?'<span class="fueler-tag">FUELER</span>':'')+(rideAvailable.has(p.idx)?'<span class="ride-tag">RIDE</span>':'')+'</div>';
+      var isSelected = selectedPerson === p.name;
+      var inSlot = slotAssignments.some(function(s){return s.indexOf(p.name)>=0;});
+      var nameStyle = isSelected ? 'color:var(--gold);font-weight:700;' : inSlot ? 'color:var(--green);' : '';
+      var slotTag = inSlot ? '<span style="font-size:10px;padding:1px 6px;border-radius:3px;background:rgba(16,185,129,0.15);color:var(--green);font-weight:600;">ASSIGNED</span>' : '';
+      html += '<div class="roster-item" style="'+(isSelected?'background:var(--gold-dim);':'')+'">' +
+        '<input type="checkbox" '+(presentPersonnel.has(p.idx)?'checked':'')+' onchange="event.stopPropagation();togglePresent('+p.idx+',this.checked)" title="Present">' +
+        '<span class="name" style="cursor:pointer;'+nameStyle+'" onclick="selectPersonForSlot(\''+esc(p.name)+'\')">'+p.name+'</span>' +
+        '<span class="section-tag">'+p.section+'</span>'+(p.fueler?'<span class="fueler-tag">FUELER</span>':'')+slotTag+'</div>';
     });
   });
   grid.innerHTML = html;
@@ -774,149 +802,9 @@ function updateHotelSummary() {
     '<div class="hotel-count" style="background:rgba(212,160,23,0.1);border:1px solid rgba(212,160,23,0.3);color:var(--gold);"><span class="count">'+t+'</span><span class="label">TOTAL</span>'+(tr?'<span class="label" style="color:var(--purple);margin-top:2px;">'+tr+' need ride</span>':'')+'</div>';
 }
 
-// ============================================================
-// AUTO-ASSIGN (even spread)
-// ============================================================
-function autoAssign() {
-  if (!dataLoaded || !CARS.length || !PERSONNEL.length) { document.getElementById('assign-status').textContent='No data.'; return; }
-  var destination = document.getElementById('vco-destination').value || 'Ops';
-
-  // Permanent car drivers
-  var PERM_DRIVERS = {
-    'Odin': 'Merritt, Dustin M.',
-    'Mjolnir': ['Farrington, Tony', 'Williams, Sean']
-  };
-
-  // Build present people list, excluding permanent car drivers (they go in their cars)
-  var permDriverNames = ['Merritt, Dustin M.', 'Farrington, Tony', 'Williams, Sean'];
-  var hotelGroups = {};
-  presentPersonnel.forEach(function(i) {
-    var p = PERSONNEL[i];
-    if (permDriverNames.indexOf(p.name) >= 0) return; // handled separately
-    if (!hotelGroups[p.hotel]) hotelGroups[p.hotel] = [];
-    hotelGroups[p.hotel].push(p);
-  });
-
-  var availCars = CARS.filter(function(c){return !c.permanent;});
-  var usedCars = {};
-  currentAssignments = [];
-
-  // Assign permanent cars first if their drivers are present
-  CARS.filter(function(c){return c.permanent;}).forEach(function(car) {
-    var driverName = '';
-    if (car.name === 'Odin') {
-      var merritt = PERSONNEL.findIndex(function(p){return p.name==='Merritt, Dustin M.';});
-      if (merritt >= 0 && presentPersonnel.has(merritt)) driverName = 'Merritt, Dustin M.';
-    } else if (car.name === 'Mjolnir') {
-      var tony = PERSONNEL.findIndex(function(p){return p.name==='Farrington, Tony';});
-      var sean = PERSONNEL.findIndex(function(p){return p.name==='Williams, Sean';});
-      if (tony >= 0 && presentPersonnel.has(tony)) driverName = 'Farrington, Tony';
-      else if (sean >= 0 && presentPersonnel.has(sean)) driverName = 'Williams, Sean';
-    }
-    if (driverName) {
-      var dp = PERSONNEL.find(function(p){return p.name===driverName;});
-      currentAssignments.push({
-        car: car.name, plate: car.plate, electric: car.electric, color: car.color, make: car.make, model: car.model,
-        driver: driverName, driverFueler: dp ? dp.fueler : false,
-        passengers: [], hotel: dp ? dp.hotel : '', destination: destination, departTime: '0500'
-      });
-    }
-  });
-
-  // Pick next available car, preferring cars at the matching hotel
-  function pickCar(hotel) {
-    for (var i = 0; i < availCars.length; i++) {
-      if (!usedCars[availCars[i].name] && availCars[i].location === hotel) return availCars[i];
-    }
-    for (var i = 0; i < availCars.length; i++) {
-      if (!usedCars[availCars[i].name]) return availCars[i];
-    }
-    return null;
-  }
-
-  function assignGroup(group, hotel) {
-    if (!group.length) return;
-    var carsRemaining = availCars.filter(function(c){return !usedCars[c.name];}).length;
-    var carsAt4 = Math.ceil(group.length / 4);
-    var carsAt5 = Math.ceil(group.length / 5);
-    var carsNeeded = carsAt4 <= carsRemaining ? carsAt4 : carsAt5;
-    if (carsNeeded > carsRemaining) carsNeeded = carsRemaining;
-    if (carsNeeded <= 0) return;
-
-    var carLoads = [];
-    for (var c = 0; c < carsNeeded; c++) carLoads.push([]);
-    var fuelers = group.filter(function(p){return p.fueler;});
-    var nonFuelers = group.filter(function(p){return !p.fueler;});
-    var ordered = fuelers.concat(nonFuelers);
-    for (var p = 0; p < ordered.length; p++) {
-      carLoads[p % carsNeeded].push(ordered[p]);
-    }
-
-    for (var c = 0; c < carsNeeded; c++) {
-      var load = carLoads[c];
-      if (!load.length) continue;
-      var car = pickCar(hotel);
-      if (!car) continue;
-      usedCars[car.name] = true;
-      var driverIdx = -1;
-      for (var d = 0; d < load.length; d++) { if (load[d].fueler) { driverIdx = d; break; } }
-      var driver;
-      if (driverIdx >= 0) { driver = load.splice(driverIdx, 1)[0]; }
-      else { driver = load.shift(); }
-
-      currentAssignments.push({
-        car: car.name, plate: car.plate, electric: car.electric, color: car.color, make: car.make, model: car.model,
-        driver: driver.name, driverFueler: driver.fueler,
-        passengers: load.map(function(p){return p.name;}),
-        hotel: hotel, destination: destination, departTime: '0500'
-      });
-    }
-  }
-
-  ['Flexbase','Kysthotell','Fosen Fjord'].forEach(function(hotel) {
-    var people = hotelGroups[hotel] || [];
-    if (!people.length) return;
-
-    // Group by section, keeping similar jobs together
-    var sectionMap = {};
-    people.forEach(function(p) {
-      if (!sectionMap[p.section]) sectionMap[p.section] = [];
-      sectionMap[p.section].push(p);
-    });
-
-    // Assign large sections (4+) to their own cars first
-    var overflow = [];
-    Object.keys(sectionMap).forEach(function(sec) {
-      var group = sectionMap[sec];
-      if (group.length >= 4) {
-        assignGroup(group, hotel);
-      } else {
-        overflow = overflow.concat(group);
-      }
-    });
-
-    // Merge small sections together, sorted by section name so similar jobs stay adjacent
-    if (overflow.length) {
-      overflow.sort(function(a,b) { return a.section < b.section ? -1 : a.section > b.section ? 1 : 0; });
-      assignGroup(overflow, hotel);
-    }
-  });
-
-  renderAssignments();
-  renderEditor();
-  updateCarStatuses();
-
-  var totalPax = currentAssignments.reduce(function(s,a){return s+1+a.passengers.length;},0);
-  document.getElementById('assign-status').textContent = currentAssignments.length+' cars, '+totalPax+' pax';
-}
-
 function updateCarStatuses() {
   CARS.forEach(function(c) {
-    var a = currentAssignments.find(function(a){return a.car===c.name;});
-    if (a && !a.returned) { c.status='committed'; c.driver=a.driver; c.dest=a.destination; }
-    else if (a && a.returned) { c.status='available'; c.driver=''; c.dest=''; }
-    else if (!c.permanent) { c.status='available'; c.driver=''; c.dest=''; }
-    // Sign-out log can also mark cars committed
+    if (!c.permanent) { c.status='available'; c.driver=''; c.dest=''; }
     var so = signoutLog.find(function(s){return s.car===c.name && !s.timeIn;});
     if (so) { c.status='committed'; c.driver=so.driver; c.dest=so.dest; }
   });
@@ -924,267 +812,117 @@ function updateCarStatuses() {
   renderFleetGrid('all-cars-grid');
 }
 
-function clearAssignments() {
-  currentAssignments = [];
-  selectedPerson = null;
-  CARS.forEach(function(c) { if(!c.permanent){c.status='available';c.driver='';c.dest='';c.eta='';} });
-  renderAssignments();
-  document.getElementById('editor-card').style.display = 'none';
-  renderFleetGrid('fleet-grid');
-  renderFleetGrid('all-cars-grid');
-  document.getElementById('assign-status').textContent = 'Cleared.';
-}
-
 // ============================================================
-// RENDER ASSIGNMENTS (viewer table)
+// RENDER SLOT GRID (viewer — dashboard)
 // ============================================================
 function renderAssignments() {
-  saveAssignmentsLocal();
-  var body = document.getElementById('assignment-body');
+  saveSlotsLocal();
+  var grid = document.getElementById('slot-grid');
   var dateEl = document.getElementById('assignment-date-display');
-  if (savedAssignmentDate) {
-    dateEl.textContent = savedAssignmentDate;
-  } else {
-    dateEl.textContent = '';
-  }
-  if (!currentAssignments.length) {
-    body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-dim);padding:40px;">No assignments yet.</td></tr>';
-    document.getElementById('show-time-display').textContent = '--';
-    return;
-  }
-  document.getElementById('show-time-display').textContent = currentAssignments.length + ' cars assigned';
-  body.innerHTML = currentAssignments.map(function(a) {
-    var hc = a.hotel==='Flexbase'?'flexbase':a.hotel==='Kysthotell'?'kysthotell':'fosen';
-    var ev = a.electric ? ' <span style="color:var(--green);font-size:10px;">EV</span>' : '';
-    var carDN = a.car;
-    var akaLine = '';
-    var driverDN = a.driver;
-    var driverNeedsRide = (function(){ var pi=PERSONNEL.findIndex(function(p){return p.name===a.driver;}); return pi>=0&&rideAvailable.has(pi); })();
-    var paxDN = a.passengers.map(function(n){
-      var pi=PERSONNEL.findIndex(function(p){return p.name===n;});
-      var needsRide = pi>=0&&rideAvailable.has(pi);
-      return n+(needsRide?' <span style="color:var(--purple);font-size:10px;font-weight:600;">RIDE</span>':'');
-    });
-    return '<tr>'+
-      '<td><strong>'+carDN+'</strong>'+akaLine+ev+'<br><span style="color:var(--text-dim);font-size:11px;">'+a.plate+'</span></td>'+
-      '<td><span class="driver-name">'+driverDN+'</span>'+(a.driverFueler?' <span style="color:var(--green);font-size:10px;">F</span>':'')+(driverNeedsRide?' <span style="color:var(--purple);font-size:10px;font-weight:600;">RIDE</span>':'')+'</td>'+
-      '<td class="pax-list">'+(paxDN.length?paxDN.join('<br>'):'<em style="color:var(--text-dim);">--</em>')+'</td>'+
-      '<td><span class="hotel-badge '+hc+'">'+a.hotel+'</span></td>'+
-      '<td style="font-weight:700;color:var(--gold-light);font-size:14px;">'+a.destination+'</td>'+
-      '<td style="font-family:JetBrains Mono,monospace;font-weight:600;color:var(--gold-light);"><input type="text" value="'+a.departTime+'" onchange="setDepartTime('+currentAssignments.indexOf(a)+',this.value)" style="width:60px;background:var(--bg-primary);border:1px solid var(--border);border-radius:4px;color:var(--gold-light);font-family:JetBrains Mono,monospace;font-weight:600;font-size:inherit;padding:2px 4px;text-align:center;">L</td>'+
-      '<td style="font-family:JetBrains Mono,monospace;font-weight:600;color:var(--text-secondary);"><input type="text" value="'+(a.etaReturn||'')+'" onchange="setEtaReturn('+currentAssignments.indexOf(a)+',this.value)" placeholder="--" style="width:60px;background:var(--bg-primary);border:1px solid var(--border);border-radius:4px;color:var(--text-secondary);font-family:JetBrains Mono,monospace;font-weight:600;font-size:inherit;padding:2px 4px;text-align:center;">'+(a.etaReturn?'L':'')+'</td>'+
-      '<td style="text-align:center;"><input type="checkbox" '+(a.returned?'checked':'')+' onchange="toggleReturned('+currentAssignments.indexOf(a)+',this.checked)" style="width:18px;height:18px;accent-color:var(--green);cursor:pointer;">'+(a.returned?'<div style="color:var(--green);font-size:10px;font-weight:600;">IN</div>':'')+'</td>'+
-    '</tr>';
+  if (savedAssignmentDate) dateEl.textContent = savedAssignmentDate;
+  else dateEl.textContent = '';
+
+  var total = slotAssignments.reduce(function(s,a){return s+a.length;},0);
+  document.getElementById('show-time-display').textContent = total + ' personnel assigned';
+
+  grid.innerHTML = CAR_SLOTS.map(function(slot, idx) {
+    var people = slotAssignments[idx] || [];
+    var pushStr = slot.push ? slot.push : '';
+    var plateStr = slot.plate || '';
+    var makeStr = slot.make ? ' <span style="color:var(--text-dim);font-size:10px;">' + slot.make + '</span>' : '';
+    var namesHtml = people.length ? people.map(function(n){
+      return '<div style="font-size:12px;padding:2px 0;color:var(--text-primary);">' + n + '</div>';
+    }).join('') : '<div style="font-size:11px;color:var(--text-dim);font-style:italic;">—</div>';
+
+    return '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;overflow:hidden;">'+
+      '<div style="background:var(--gold-dim);border-bottom:1px solid var(--border);padding:6px 10px;display:flex;justify-content:space-between;align-items:center;">'+
+        '<span style="font-family:JetBrains Mono,monospace;font-weight:700;font-size:11px;color:var(--gold);">' + slot.num + '</span>'+
+        '<span style="font-weight:600;font-size:12px;color:var(--gold-light);">' + slot.label + '</span>'+
+      '</div>'+
+      '<div style="padding:8px 10px;">' + namesHtml + '</div>'+
+      '<div style="padding:4px 10px 8px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">'+
+        '<span style="font-family:JetBrains Mono,monospace;font-size:10px;color:var(--text-dim);">' + plateStr + makeStr + '</span>'+
+        '<span style="font-family:JetBrains Mono,monospace;font-size:11px;font-weight:700;color:'+(pushStr==='A/R'?'var(--amber)':'var(--green)')+';">' + (pushStr ? pushStr : '') + '</span>'+
+      '</div>'+
+    '</div>';
   }).join('');
 }
 
 // ============================================================
-// EDITOR (VCO tap-to-move)
+// SLOT EDITOR (VCO — tap roster name, tap slot)
 // ============================================================
 function renderEditor() {
   if (!isVCO) return;
-  var card = document.getElementById('editor-card');
-  card.style.display = 'block';
-  var editor = document.getElementById('assign-editor');
+  var editor = document.getElementById('slot-editor');
+  if (!editor) return;
 
-  // Build unassigned list
-  var assigned = {};
-  currentAssignments.forEach(function(a) {
-    assigned[a.driver] = true;
-    a.passengers.forEach(function(n) { assigned[n] = true; });
-  });
-  var unassigned = [];
-  presentPersonnel.forEach(function(i) {
-    var p = PERSONNEL[i];
-    if (!assigned[p.name]) unassigned.push(p);
-  });
+  editor.innerHTML = CAR_SLOTS.map(function(slot, idx) {
+    var people = slotAssignments[idx] || [];
+    var namesHtml = people.map(function(n) {
+      var cls = 'person-chip ' + (selectedPerson === n ? 'selected' : '');
+      return '<span class="' + cls + '" onclick="event.stopPropagation();removeFromSlot(' + idx + ',\'' + esc(n) + '\')" style="cursor:pointer;font-size:11px;">' + n + ' ✕</span>';
+    }).join('');
+    if (!namesHtml) namesHtml = '<span style="color:var(--text-dim);font-size:11px;">Empty</span>';
 
-  var html = currentAssignments.map(function(a, idx) {
-    var carObj = CARS.find(function(c){return c.name===a.car;});
-    var carLoc = carObj ? carObj.location : '';
-    var paxHtml = '';
-    var hasMismatch = false;
-    // Driver chip
-    var dp = PERSONNEL.find(function(p){return p.name===a.driver;});
-    var dMismatch = dp && carLoc && dp.hotel && dp.hotel !== carLoc;
-    if (dMismatch) hasMismatch = true;
-    var dClass = 'person-chip driver ' + (dp && dp.section==='Pilots' ? 'pilot' : 'support');
-    if (selectedPerson === a.driver) dClass += ' selected';
-    paxHtml += '<span class="'+dClass+'" onclick="selectPerson(\''+esc(a.driver)+'\')">'+(dMismatch?'⚠ ':'')+a.driver+' (D)</span>';
-    // Passenger chips
-    a.passengers.forEach(function(name) {
-      var p = PERSONNEL.find(function(p){return p.name===name;});
-      var pMismatch = p && carLoc && p.hotel && p.hotel !== carLoc;
-      if (pMismatch) hasMismatch = true;
-      var cls = 'person-chip ' + (p && p.section==='Pilots' ? 'pilot' : 'support');
-      if (selectedPerson === name) cls += ' selected';
-      paxHtml += '<span class="'+cls+'" onclick="selectPerson(\''+esc(name)+'\')">'+(pMismatch?'⚠ ':'')+name+'</span>';
-    });
-
-    var mismatchStyle = hasMismatch ? 'border-color:var(--red);' : '';
-    var locBadge = carLoc ? (function(){var lc=carLoc==='Flexbase'?'flexbase':carLoc==='Kysthotell'?'kysthotell':'fosen'; return ' <span class="hotel-badge '+lc+'" style="font-size:9px;">'+carLoc+'</span>';})() : '';
-    return '<div class="assign-car-box" style="'+mismatchStyle+'" onclick="moveSelectedTo('+idx+')">'+
-      '<div class="car-header"><span class="car-name">'+a.car+locBadge+'</span><span class="car-count">'+(1+a.passengers.length)+'/5</span></div>'+
-      '<div class="dep-time"><label>Depart:</label><input type="text" value="'+a.departTime+'" onchange="setDepartTime('+idx+',this.value)" onclick="event.stopPropagation()"></div>'+
-      '<div class="dep-time"><label>Dest:</label><input type="text" value="'+a.destination+'" onchange="setDestination('+idx+',this.value)" onclick="event.stopPropagation()"></div>'+
-      '<div>'+paxHtml+'</div>'+
+    return '<div onclick="assignToSlot(' + idx + ')" style="background:var(--bg-card);border:1px solid ' + (selectedPerson ? 'var(--gold)' : 'var(--border)') + ';border-radius:8px;overflow:hidden;cursor:pointer;">'+
+      '<div style="background:var(--gold-dim);border-bottom:1px solid var(--border);padding:6px 10px;display:flex;justify-content:space-between;align-items:center;">'+
+        '<span style="font-family:JetBrains Mono,monospace;font-weight:700;font-size:11px;color:var(--gold);">' + slot.num + '</span>'+
+        '<span style="font-weight:600;font-size:12px;color:var(--gold-light);">' + slot.label + '</span>'+
+        '<span style="font-size:10px;color:var(--text-dim);">' + people.length + '/5</span>'+
+      '</div>'+
+      '<div style="padding:6px 10px;min-height:40px;">' + namesHtml + '</div>'+
+      '<div style="padding:4px 10px 6px;border-top:1px solid var(--border);font-family:JetBrains Mono,monospace;font-size:10px;color:var(--text-dim);">' + (slot.plate||'') + (slot.push ? ' | Push: ' + slot.push : '') + '</div>'+
     '</div>';
   }).join('');
-
-  // Empty cars (not yet in assignments)
-  CARS.forEach(function(car) {
-    var inAssign = currentAssignments.find(function(a){return a.car===car.name;});
-    if (inAssign) return;
-    var eLocBadge = car.location ? (function(){var lc=car.location==='Flexbase'?'flexbase':car.location==='Kysthotell'?'kysthotell':'fosen'; return ' <span class="hotel-badge '+lc+'" style="font-size:9px;">'+car.location+'</span>';})() : '';
-    html += '<div class="assign-car-box" style="border-color:var(--border);opacity:0.6;" onclick="addToCar(\''+esc(car.name)+'\')">'+
-      '<div class="car-header"><span class="car-name">'+car.name+eLocBadge+'</span><span class="car-count">0/5</span>'+(car.permanent?' <span style="font-size:10px;color:var(--amber);">PERM</span>':'')+'</div>'+
-      '<div><span style="color:var(--text-dim);font-size:12px;">Empty — tap person then this car</span></div>'+
-    '</div>';
-  });
-
-  // Unassigned pool
-  var unHtml = unassigned.map(function(p) {
-    var cls = 'person-chip ' + (p.section==='Pilots' ? 'pilot' : 'support');
-    if (selectedPerson === p.name) cls += ' selected';
-    return '<span class="'+cls+'" onclick="selectPerson(\''+esc(p.name)+'\')">'+p.name+(p.fueler?' (F)':'')+'</span>';
-  }).join('');
-  html += '<div class="assign-car-box" style="border-color:var(--border);background:var(--bg-primary);" onclick="moveSelectedTo(\'unassigned\')">'+
-    '<div class="car-header"><span class="car-name" style="color:var(--text-secondary);">Unassigned</span><span class="car-count" style="color:var(--text-dim);">'+unassigned.length+'</span></div>'+
-    '<div>'+(unHtml||'<span style="color:var(--text-dim);font-size:12px;">None</span>')+'</div>'+
-  '</div>';
-
-  editor.innerHTML = html;
-}
-
-function addToCar(carName) {
-  if (!selectedPerson) return;
-  var name = selectedPerson;
-  var car = CARS.find(function(c){return c.name===carName;});
-  if (!car) return;
-
-  // Hotel mismatch check
-  var p = PERSONNEL.find(function(p){return p.name===name;});
-  if (p && car.location && p.hotel && p.hotel !== car.location) {
-    if (!confirm(name + ' is at ' + p.hotel + ' but ' + car.name + ' is at ' + car.location + '. Assign anyway?')) return;
-  }
-
-  // Remove from current assignment if in one
-  for (var i = 0; i < currentAssignments.length; i++) {
-    var a = currentAssignments[i];
-    if (a.driver === name) {
-      if (a.passengers.length > 0) {
-        a.driver = a.passengers.shift();
-        a.driverFueler = !!(PERSONNEL.find(function(p){return p.name===a.driver;}) || {}).fueler;
-      } else {
-        currentAssignments.splice(i, 1);
-      }
-      break;
-    } else {
-      var pIdx = a.passengers.indexOf(name);
-      if (pIdx >= 0) { a.passengers.splice(pIdx, 1); break; }
-    }
-  }
-
-  // Create new assignment for this car
-  var p = PERSONNEL.find(function(p){return p.name===name;});
-  currentAssignments.push({
-    car: car.name, plate: car.plate, electric: car.electric,
-    driver: name, driverFueler: p ? p.fueler : false,
-    passengers: [], hotel: p ? p.hotel : '', destination: '', departTime: '0500'
-  });
-
-  selectedPerson = null;
-  renderEditor();
-  renderAssignments();
-  updateCarStatuses();
-  pushAssignmentsToSheet();
 }
 
 function esc(s) { return s.replace(/'/g, "\\'"); }
 
-function selectPerson(name) {
-  event.stopPropagation();
-  if (selectedPerson === name) { selectedPerson = null; }
-  else { selectedPerson = name; }
+function selectPersonForSlot(name) {
+  if (selectedPerson === name) selectedPerson = null;
+  else selectedPerson = name;
   renderEditor();
+  renderRoster();
 }
 
-function moveSelectedTo(targetIdx) {
+function assignToSlot(slotIdx) {
   if (!selectedPerson) return;
-  var name = selectedPerson;
-
-  // Remove from current assignment
-  for (var i = 0; i < currentAssignments.length; i++) {
-    var a = currentAssignments[i];
-    if (a.driver === name) {
-      // Moving the driver - need to promote a passenger
-      if (a.passengers.length > 0) {
-        a.driver = a.passengers.shift();
-        a.driverFueler = !!(PERSONNEL.find(function(p){return p.name===a.driver;}) || {}).fueler;
-      } else {
-        // Only person in car, remove assignment
-        currentAssignments.splice(i, 1);
-        break;
-      }
-    } else {
-      var pIdx = a.passengers.indexOf(name);
-      if (pIdx >= 0) a.passengers.splice(pIdx, 1);
-    }
+  var people = slotAssignments[slotIdx];
+  if (people.length >= 5) return;
+  // Remove from any other slot first
+  for (var i = 0; i < slotAssignments.length; i++) {
+    var idx = slotAssignments[i].indexOf(selectedPerson);
+    if (idx >= 0) slotAssignments[i].splice(idx, 1);
   }
+  people.push(selectedPerson);
+  selectedPerson = null;
+  saveSlotsLocal();
+  renderEditor();
+  renderAssignments();
+  renderRoster();
+}
 
-  // Add to target
-  if (targetIdx !== 'unassigned' && targetIdx >= 0 && targetIdx < currentAssignments.length) {
-    var target = currentAssignments[targetIdx];
-    var targetCar = CARS.find(function(c){return c.name===target.car;});
-    var person = PERSONNEL.find(function(p){return p.name===name;});
-    if (person && targetCar && targetCar.location && person.hotel && person.hotel !== targetCar.location) {
-      if (!confirm(name + ' is at ' + person.hotel + ' but ' + target.car + ' is at ' + targetCar.location + '. Assign anyway?')) {
-        selectedPerson = null; renderEditor(); return;
-      }
-    }
-    if (1 + target.passengers.length < 5) {
-      target.passengers.push(name);
-    }
-  }
+function removeFromSlot(slotIdx, name) {
+  var people = slotAssignments[slotIdx];
+  var idx = people.indexOf(name);
+  if (idx >= 0) people.splice(idx, 1);
+  saveSlotsLocal();
+  renderEditor();
+  renderAssignments();
+  renderRoster();
+}
 
+function clearSlots() {
+  slotAssignments = CAR_SLOTS.map(function(){return [];});
+  saveSlotsLocal();
   selectedPerson = null;
   renderEditor();
   renderAssignments();
-  updateCarStatuses();
-  pushAssignmentsToSheet();
+  document.getElementById('assign-status').textContent = 'Cleared.';
 }
 
-function setDepartTime(idx, val) {
-  if (idx >= 0 && idx < currentAssignments.length) {
-    currentAssignments[idx].departTime = val;
-    renderAssignments();
-    pushAssignmentsToSheet();
-  }
-}
-
-function setDestination(idx, val) {
-  if (idx >= 0 && idx < currentAssignments.length) {
-    currentAssignments[idx].destination = val;
-    renderAssignments();
-    pushAssignmentsToSheet();
-  }
-}
-
-function setEtaReturn(idx, val) {
-  if (idx >= 0 && idx < currentAssignments.length) {
-    currentAssignments[idx].etaReturn = val;
-    renderAssignments();
-    pushAssignmentsToSheet();
-  }
-}
-
-function toggleReturned(idx, checked) {
-  if (idx >= 0 && idx < currentAssignments.length) {
-    currentAssignments[idx].returned = checked;
-    renderAssignments();
-    updateCarStatuses();
-    pushAssignmentsToSheet();
-  }
+function clearAssignments() {
+  clearSlots();
 }
 
 // ============================================================
@@ -1353,14 +1091,19 @@ function clearWebAppUrl() {
 }
 
 function pushAssignmentsToSheet() {
-  if (!currentAssignments.length) return;
+  var total = slotAssignments.reduce(function(s,a){return s+a.length;},0);
+  if (!total) { document.getElementById('assign-status').textContent = 'No assignments to push.'; return; }
   var date = document.getElementById('vco-date').value || '';
+  // Build slot data for sheet storage
+  var slotData = CAR_SLOTS.map(function(slot, idx) {
+    return { num: slot.num, label: slot.label, plate: slot.plate, push: slot.push, make: slot.make, people: slotAssignments[idx] || [] };
+  });
   postToSheet({
     action: 'saveAssignments',
     date: date,
-    assignments: currentAssignments
+    assignments: slotData
   });
-  document.getElementById('assign-status').textContent = 'Pushed to sheet!';
+  document.getElementById('assign-status').textContent = 'Pushed ' + total + ' personnel to sheet!';
 }
 
 // ============================================================
@@ -1437,22 +1180,19 @@ function switchTab(tab) {
 // EXPORT PDF (Puck Board style)
 // ============================================================
 function exportPDF() {
-  if (!currentAssignments.length) { alert('No assignments to export.'); return; }
+  var totalPax = slotAssignments.reduce(function(s,a){return s+a.length;},0);
+  if (!totalPax) { alert('No assignments to export.'); return; }
   var jsPDF = window.jspdf.jsPDF;
   var doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
 
   var pageW = doc.internal.pageSize.getWidth();
   var pageH = doc.internal.pageSize.getHeight();
 
-  // Colors matching Puck Board
-  var GREEN_HDR = [45, 95, 22];   // dark green
-  var RED_SEC = [139, 30, 30];    // maroon/red section
+  var GREEN_HDR = [45, 95, 22];
   var WHITE = [255, 255, 255];
-  var LIGHT_GREEN = [220, 240, 215];
   var LIGHT_ROW = [250, 250, 250];
   var BLACK = [0, 0, 0];
 
-  // Date
   var dateStr = document.getElementById('vco-date').value || selectedDate;
   var parts = dateStr.split('-');
   var dateObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
@@ -1464,142 +1204,64 @@ function exportPDF() {
   doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
-  doc.text('VCO Car Plan', 10, 9);
+  doc.text('VCO Car Plan — Flexbase', 10, 9);
   doc.setFontSize(12);
   doc.text(dayLabel, pageW / 2, 9, { align: 'center' });
 
-  // Location
   var loc = document.getElementById('tdy-location').textContent || '';
   if (loc && loc !== '--') {
     doc.setFontSize(10);
     doc.text(loc, pageW - 10, 9, { align: 'right' });
   }
 
-  // Day tabs (M T W T F like Puck Board)
-  var dayLetters = ['M', 'T', 'W', 'T', 'F'];
-  var tabStartX = pageW - 55;
-  var dow = dateObj.getDay(); // 0=Sun
-  doc.setFontSize(8);
-  for (var i = 0; i < 5; i++) {
-    var tx = tabStartX + i * 10;
-    if (i === (dow - 1)) {
-      doc.setFillColor(GREEN_HDR[0], GREEN_HDR[1], GREEN_HDR[2]);
-      doc.rect(tx, 15, 9, 6, 'F');
-      doc.setTextColor(WHITE[0], WHITE[1], WHITE[2]);
-    } else {
-      doc.setFillColor(230, 230, 230);
-      doc.rect(tx, 15, 9, 6, 'F');
-      doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
-    }
-    doc.text(dayLetters[i], tx + 4.5, 19.5, { align: 'center' });
-  }
-
-  // Morning Push section header
-  doc.setFillColor(RED_SEC[0], RED_SEC[1], RED_SEC[2]);
-  doc.rect(5, 24, 4, 8, 'F');
-  doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.text('MORNING PUSH', 12, 30);
-
-  // Build table data grouped by hotel
-  var hotelGroups = {};
-  currentAssignments.forEach(function(a) {
-    var h = a.hotel || 'Other';
-    if (!hotelGroups[h]) hotelGroups[h] = [];
-    hotelGroups[h].push(a);
-  });
-
+  // Build table from slots
   var tableBody = [];
-  var hotelRowIndices = []; // track hotel header rows for styling
-  ['Flexbase', 'Kysthotell', 'Fosen Fjord', 'Other'].forEach(function(hotel) {
-    var group = hotelGroups[hotel];
-    if (!group || !group.length) return;
-    hotelRowIndices.push(tableBody.length);
-    tableBody.push([{ content: hotel.toUpperCase() + ' (' + group.length + ' cars)', colSpan: 11, styles: { fillColor: LIGHT_GREEN, textColor: GREEN_HDR, fontStyle: 'bold', fontSize: 8 } }]);
-    group.forEach(function(a) {
-      var paxNames = a.passengers.map(function(n) { return n; }).join(', ');
-      var ev = a.electric ? ' (EV)' : '';
-      tableBody.push([
-        a.car,
-        (a.color || ''),
-        (a.make || '') + ' ' + (a.model || ''),
-        a.plate + ev,
-        a.driver + (a.driverFueler ? ' [F]' : ''),
-        paxNames || '--',
-        hotel,
-        a.destination,
-        a.departTime + 'L',
-        a.etaReturn ? a.etaReturn + 'L' : '--',
-        (1 + a.passengers.length) + '/5'
-      ]);
-    });
+  CAR_SLOTS.forEach(function(slot, idx) {
+    var people = slotAssignments[idx] || [];
+    tableBody.push([
+      String(slot.num),
+      slot.label,
+      slot.plate || '',
+      slot.make || '',
+      slot.push || '',
+      people.join(', ') || '--',
+      String(people.length)
+    ]);
   });
 
   doc.autoTable({
-    startY: 34,
+    startY: 18,
     margin: { left: 5, right: 5 },
-    head: [['Car', 'Color', 'Make/Model', 'Plate', 'Driver', 'Passengers', 'Hotel', 'Destination', 'Depart', 'ETA Return', 'Pax']],
+    head: [['#', 'Slot', 'Plate', 'Make', 'Push', 'Personnel', 'Count']],
     body: tableBody,
     theme: 'grid',
-    headStyles: {
-      fillColor: GREEN_HDR,
-      textColor: WHITE,
-      fontStyle: 'bold',
-      fontSize: 8,
-      cellPadding: 2,
-      halign: 'left'
-    },
-    bodyStyles: {
-      fontSize: 7,
-      cellPadding: 1.5,
-      textColor: BLACK,
-      lineColor: [180, 180, 180],
-      lineWidth: 0.2
-    },
-    alternateRowStyles: {
-      fillColor: LIGHT_ROW
-    },
+    headStyles: { fillColor: GREEN_HDR, textColor: WHITE, fontStyle: 'bold', fontSize: 9, cellPadding: 2 },
+    bodyStyles: { fontSize: 8, cellPadding: 2, textColor: BLACK, lineColor: [180, 180, 180], lineWidth: 0.2 },
+    alternateRowStyles: { fillColor: LIGHT_ROW },
     columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 22 },
-      1: { cellWidth: 18 },
-      2: { cellWidth: 28 },
-      3: { cellWidth: 22 },
-      4: { cellWidth: 32 },
-      5: { cellWidth: 48 },
-      6: { cellWidth: 20 },
-      7: { cellWidth: 25 },
-      8: { cellWidth: 16, halign: 'center' },
-      9: { cellWidth: 18, halign: 'center' },
-      10: { cellWidth: 12, halign: 'center' }
-    },
-    didParseCell: function(data) {
-      // Style hotel header rows
-      if (data.section === 'body' && hotelRowIndices.indexOf(data.row.index) >= 0) {
-        data.cell.styles.fillColor = LIGHT_GREEN;
-        data.cell.styles.textColor = GREEN_HDR;
-        data.cell.styles.fontStyle = 'bold';
-      }
+      0: { cellWidth: 10, halign: 'center', fontStyle: 'bold' },
+      1: { cellWidth: 30, fontStyle: 'bold' },
+      2: { cellWidth: 22 },
+      3: { cellWidth: 20 },
+      4: { cellWidth: 16, halign: 'center' },
+      5: { cellWidth: 'auto' },
+      6: { cellWidth: 14, halign: 'center' }
     }
   });
 
-  // Summary stats at bottom
-  var finalY = doc.lastAutoTable.finalY + 8;
-  var totalPax = currentAssignments.reduce(function(s, a) { return s + 1 + a.passengers.length; }, 0);
+  var finalY = doc.lastAutoTable.finalY + 6;
   doc.setFontSize(9);
   doc.setTextColor(BLACK[0], BLACK[1], BLACK[2]);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Total: ' + currentAssignments.length + ' cars | ' + totalPax + ' personnel', 5, finalY);
+  doc.text('Total: ' + CAR_SLOTS.length + ' slots | ' + totalPax + ' personnel', 5, finalY);
+  doc.setFontSize(8);
+  doc.text('KYSTHOTELL / FOSEN FJORD: See individual shop schedule', 5, finalY + 5);
 
-  // Footer
   doc.setFontSize(7);
   doc.setTextColor(120, 120, 120);
   doc.text('Generated: ' + new Date().toLocaleString('en-US', { hour12: false }), 5, pageH - 5);
   doc.text('VCO Car Plan', pageW - 5, pageH - 5, { align: 'right' });
 
-  // Download
-  var filename = 'VCO_Car_Plan_' + dateStr + '.pdf';
-  doc.save(filename);
+  doc.save('VCO_Car_Plan_' + dateStr + '.pdf');
 }
 
 function initApp() {
