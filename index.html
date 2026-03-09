@@ -830,6 +830,16 @@ function renderAssignments() {
     var pushStr = slot.push ? slot.push : '';
     var plateStr = slot.plate || '';
     var makeStr = slot.make ? ' <span style="color:var(--text-dim);font-size:10px;">' + slot.make + '</span>' : '';
+    var car = CARS.find(function(c){return c.plate === slot.plate;});
+    var iconHtml = '';
+    if (car && car.icon) {
+      var iconSrc = car.icon.startsWith('http') ? car.icon : 'img/'+car.icon;
+      var pilotLabel = car.pilotName || '';
+      iconHtml = '<div style="text-align:center;padding:6px 4px 2px;">'+
+        '<img src="'+iconSrc+'" alt="" style="width:48px;height:48px;object-fit:contain;border-radius:50%;border:2px solid var(--gold);display:block;margin:0 auto;">'+
+        (pilotLabel ? '<div style="font-size:9px;color:var(--gold);font-weight:600;margin-top:3px;line-height:1.2;">'+pilotLabel+'</div>' : '')+
+      '</div>';
+    }
     var namesHtml = people.length ? people.map(function(n){
       return '<div style="font-size:12px;padding:2px 0;color:var(--text-primary);">' + n + '</div>';
     }).join('') : '<div style="font-size:11px;color:var(--text-dim);font-style:italic;">—</div>';
@@ -839,6 +849,7 @@ function renderAssignments() {
         '<span style="font-family:JetBrains Mono,monospace;font-weight:700;font-size:11px;color:var(--gold);">' + slot.num + '</span>'+
         '<span style="font-weight:600;font-size:12px;color:var(--gold-light);">' + slot.label + '</span>'+
       '</div>'+
+      iconHtml+
       '<div style="padding:8px 10px;">' + namesHtml + '</div>'+
       '<div style="padding:4px 10px 8px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">'+
         '<span style="font-family:JetBrains Mono,monospace;font-size:10px;color:var(--text-dim);">' + plateStr + makeStr + '</span>'+
