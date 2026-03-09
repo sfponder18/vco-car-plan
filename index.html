@@ -251,7 +251,6 @@ body::before {
 
   <div class="tab-bar" id="tab-bar">
     <button class="tab-btn active" onclick="switchTab('dashboard')">Dashboard</button>
-    <button class="tab-btn" onclick="switchTab('cars')">Fleet</button>
     <button class="tab-btn vco-only" onclick="switchTab('vco')" style="display:none;">VCO Panel</button>
     <button class="tab-btn" onclick="switchTab('signout')">Sign-Out</button>
     <button class="tab-btn vco-only" onclick="switchTab('settings')" style="display:none;">Settings</button>
@@ -283,19 +282,6 @@ body::before {
           KYSTHOTELL / FOSEN FJORD: See individual shop schedule
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- FLEET (everyone) -->
-  <div class="tab-content" id="tab-cars">
-    <div class="card">
-      <div class="card-header">
-        <h2>Fleet</h2>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <button class="btn btn-sm" id="fleet-filter-btn" onclick="toggleFleetFilter()" style="background:var(--green);color:#fff;">Available Only</button>
-        </div>
-      </div>
-      <div class="card-body"><div class="car-grid" id="all-cars-grid"><div class="loading"><div class="spinner"></div><br>Loading...</div></div></div>
     </div>
   </div>
 
