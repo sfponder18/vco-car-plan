@@ -480,13 +480,13 @@ var CAR_SLOTS = [
 var slotAssignments = (function(){ try { var s=localStorage.getItem('vco_slots'); return s?JSON.parse(s):[]; } catch(e){ return []; } })();
 if (!slotAssignments.length || slotAssignments.every(function(s){return !s.length;})) {
   slotAssignments = [
-    ['Merrit D','Samarah L','Olmschenk C','Kolmer B'],
-    ['Reen G','Evans N','McGinty G','Moore J'],
-    ['Silva R','Hlavinka N','Wienke M','Quimby J'],
-    ['Howard A','Ponder S','Pieton R','Thompson B'],
-    ['Pieton R'],
-    ['Gould J'],
-    ['Woodall R','Holmes T'],
+    ['Merrit, D','Samarah, L','Olmschenk, C','Kolmer, B'],
+    ['Reen, G','Evans, N','McGinty, G','Moore, J'],
+    ['Silva, R','Hlavinka, N','Wienke, M','Quimby, J'],
+    ['Howard, A','Ponder, S','Pieton, R','Thompson, B'],
+    ['Pieton, R'],
+    ['Gould, J'],
+    ['Woodall, R','Holmes, T'],
     [],
     []
   ];
