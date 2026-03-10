@@ -429,28 +429,30 @@ var rideAvailable = new Set();
 var rosterEditedLocally = false;
 var selectedPerson = null;
 
-// Fixed car slots (hardcoded from 10Mar plan)
+// Fixed car slots (hardcoded from 11Mar plan)
 var CAR_SLOTS = [
-  {num:1, label:'Skooby', plate:'VJ36980', push:'0730', make:''},
-  {num:2, label:'2nd AM', plate:'EN35700', push:'0730', make:'Nissan'},
+  {num:1, label:'1st AM', plate:'NH17739', push:'0700', make:'Suzuki'},
+  {num:2, label:'2nd AM', plate:'EN35700', push:'0615', make:'Nissan'},
   {num:3, label:'PM', plate:'EN10871', push:'1600', make:'VW'},
   {num:4, label:'MPC Car 1', plate:'EN71155', push:'0700', make:'Ford'},
   {num:5, label:'T3 Car AM', plate:'AS68952', push:'1100', make:'Suzuki'},
   {num:6, label:'T3 Car PM', plate:'EN43555', push:'1700', make:'Volvo'},
-  {num:7, label:'DROP OFF JUDO', plate:'EP69777', push:'', make:'Ford'},
-  {num:8, label:'OPEN', plate:'NH17739', push:'A/R', make:'Suzuki'}
+  {num:7, label:'SPARE', plate:'EP69777', push:'0615', make:'Ford'},
+  {num:8, label:'SKOOBY', plate:'VJ36980', push:'A/R', make:''},
+  {num:9, label:'OMS', plate:'?', push:'A/R', make:''}
 ];
 // slotAssignments[slotIndex] = [name1, name2, ...] (up to 5)
 var slotAssignments = (function(){ try { var s=localStorage.getItem('vco_slots'); return s?JSON.parse(s):[]; } catch(e){ return []; } })();
 if (!slotAssignments.length || slotAssignments.every(function(s){return !s.length;})) {
   slotAssignments = [
-    ['Merrit, D','Samarah, L','Olmschenk, C','Kolmer, B'],
-    ['Reen, G','Evans, N','McGinty, G','Moore, J'],
-    ['Silva, R','Hlavinka, N','Wienke, M','Quimby, J'],
-    ['Howard, A','Ponder, S','Pieton, R','Thompson, B'],
-    ['Pieton, R'],
-    ['Gould, J'],
-    ['Woodall, R','Holmes, T'],
+    ['Howard, A','Pieton, R','Thompson, B'],
+    ['Cartin, D','Evans, N','McGinty, G','Samarah, L','Ponder, S'],
+    ['Moroz, C','Woodall, R','Silva, R','Regier, K'],
+    ['Kolmer, B','Moore, J','Meadows, K'],
+    ['Holmes, T'],
+    ['Silva, R'],
+    [],
+    ['Merrit, D','Olmschenk, C'],
     []
   ];
   try { localStorage.setItem('vco_slots', JSON.stringify(slotAssignments)); } catch(e){}
